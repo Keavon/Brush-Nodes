@@ -1,0 +1,185 @@
+section {
+	position: absolute;
+	width: 256px;
+	border-radius: 10px 10px 5px 5px;
+	box-shadow: 0 0 20px black;
+	background: hsl(0, 0%, 25%);
+	z-index: 1;
+	padding-bottom: 8px;
+}
+
+section.selected {
+	border: 1px solid white;
+	border-top: none;
+	transform: translate(-1px, -1px);
+}
+
+section .row {
+	position: relative;
+}
+
+section canvas {
+	width: 256px;
+	height: 256px;
+	vertical-align: top;
+}
+
+section h1,
+section label {
+	display: block;
+	color: white;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 24px;
+	margin: 0;
+	padding: 0 16px;
+}
+
+section h1 {
+	background: rgb(0, 156, 184);
+	border-radius: 5px 5px 0 0;
+}
+
+section.selected h1 {
+	border: 1px solid white;
+	border-bottom: none;
+	box-sizing: content-box;
+	width: calc(100% - 16px - 16px);
+	padding-top: 1px;
+	margin-bottom: -1px;
+	transform: translate(-1px, -1px);
+}
+
+section .row.thumbnail {
+	margin-bottom: 8px;
+}
+
+section .row.in label {
+	text-align: left;
+}
+
+section .row.out:not(.in) label {
+	text-align: right;
+}
+
+/* Numerical input box */
+section label {
+	position: relative;
+	z-index: 10;
+	pointer-events: none;
+}
+
+section label .colon {
+	display: none;
+}
+
+section label input ~ .colon {
+	display: inline;
+}
+
+section label input {
+	z-index: -1;
+	background: hsl(0, 0%, 40%);
+	display: block;
+	outline: none;
+	border: none;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: auto 10px;
+	padding: 0 6px;
+	width: calc(100% - 32px);
+	height: 20px;
+	border-radius: 3px;
+	text-align: right;
+	color: white;
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 400;
+	pointer-events: auto;
+}
+
+section label:focus-within {
+	color: transparent;
+}
+
+section label:focus-within input {
+	text-align: center;
+}
+
+/* In/out connector dots */
+section .connector {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	width: 8px;
+	height: 8px;
+	background: white;
+	border: 1px solid black;
+	border-radius: 50%;
+}
+
+/* Offsets for multiple nodes in a group */
+section .connector.group-1-of-2 {
+	transform: translateY(-10px);
+}
+section .connector.group-2-of-2 {
+	transform: translateY(10px);
+}
+
+section .connector.group-1-of-3 {
+	transform: translateY(-20px);
+}
+section .connector.group-3-of-3 {
+	transform: translateY(20px);
+}
+
+section .connector.group-1-of-4 {
+	transform: translateY(-30px);
+}
+section .connector.group-2-of-4 {
+	transform: translateY(-10px);
+}
+section .connector.group-3-of-4 {
+	transform: translateY(10px);
+}
+section .connector.group-4-of-4 {
+	transform: translateY(30px);
+}
+
+section .connector:hover {
+	background: hsl(0, 0%, 75%);
+}
+
+section .row.in.out .connector,
+section .row.in:not(.out) .connector {
+	left: -5px;
+	right: unset;
+}
+
+section .row.out:not(.in) .connector,
+section .row.in.out :not(.connector) + .connector {
+	left: unset;
+	right: -5px;
+}
+
+/* Wires */
+.wires {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	pointer-events: none;
+}
+
+.wires path {
+	fill: none;
+	stroke: white;
+	stroke-width: 2px;
+}
