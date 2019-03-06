@@ -56,6 +56,8 @@ const blendBlueprint = {
 	],
 };
 
+import { renderThumbnail } from "./main.js"
+
 const nodeDatabase = [];
 
 let cursorWireConnection = null;
@@ -64,7 +66,7 @@ let cursorWireDirectionOnNodeSide = null;
 let draggingSelection = false;
 let selectionWasDragged = false;
 
-function nodes() {
+export function nodes() {
 	const perlin1 = createNode(perlinBlueprint, 50, 50);
 	const perlin2 = createNode(perlinBlueprint, 50, 500);
 	const blend = createNode(blendBlueprint, 1000, 300);

@@ -13,13 +13,9 @@ const billboardShader = {
 	},
 }
 
-function renderThumbnail(canvas) {
+export function renderThumbnail(canvas) {
 	const gl = canvas.getContext("webgl");
 	load(gl);
-}
-
-function main() {
-
 }
 
 function load(gl) {

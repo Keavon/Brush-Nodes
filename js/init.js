@@ -1,6 +1,3 @@
-function init() {
-	main();
-	nodes();
-}
+import { nodes } from "./nodes.js"
 
-document.addEventListener("DOMContentLoaded", init);
+nodes();
