@@ -39,10 +39,10 @@ const blendBlueprint = {
 		},
 		{
 			name: "Blend Mode",
-			display: "input",
+			display: "dropdown",
+			out: [],
 			in: [],
 			default: "Normal",
-			out: [],
 		},
 		{
 			name: "Opacity",
@@ -323,7 +323,7 @@ function updateWire(path, outConnector, inConnector) {
 	const curveAmount = (-(2 ** (-10 * horizontalGap / curveFalloffRate)) + 1);
 	const curve = curveAmount * curveLength;
 
-	let pathString = `M ${outConnectorX} ${outConnectorY} C ${outConnectorX + curve} ${outConnectorY}, ${inConnectorX - curve} ${inConnectorY}, ${inConnectorX} ${inConnectorY}`;
+	let pathString = `M${outConnectorX},${outConnectorY} C${outConnectorX + curve},${outConnectorY} ${inConnectorX - curve},${inConnectorY} ${inConnectorX},${inConnectorY}`;
 	path.setAttribute("d", pathString);
 }
 
@@ -401,27 +401,44 @@ function createNode(blueprint, xDestination, yDestination) {
 		appendConnectors(row, property.in, "in");
 
 		switch (property.display) {
-		case "thumbnail":
-			const canvas = document.createElement("canvas");
-			row.appendChild(canvas);
-			renderThumbnail(canvas);
-			break;
-		case "label":
-		case "input":
-			const label = document.createElement("label");
-			label.innerHTML = property.name;
-
-			if (property.display === "input") {
-				const input = document.createElement("input");
-				input.value = property.default;
-				label.appendChild(input);
+			case "thumbnail": {
+				const canvas = document.createElement("canvas");
+				row.appendChild(canvas);
+				renderThumbnail(canvas);
+				break;
 			}
-	
-			const colon = document.createElement("colon");
-			label.appendChild(colon);
-	
-			row.appendChild(label);
-			break;
+			case "label":
+			case "input":
+			case "dropdown": {
+				const label = document.createElement("label");
+				label.innerHTML = property.name;
+
+				if (property.display === "input") {
+					const input = document.createElement("input");
+					input.value = property.default;
+					label.appendChild(input);
+				}
+
+				if (property.display === "dropdown") {
+					label.innerHTML = "";
+					const dropdown = document.createElement("select");
+
+					["Normal", "Multiply", "Screen", "Overlay"].forEach((optionText) => {
+						const option = document.createElement("option");
+						if (optionText === property.default) option.setAttributeNode(document.createAttribute("selected"));
+						option.innerHTML = optionText;
+						dropdown.appendChild(option);
+					});
+
+					label.appendChild(dropdown);
+				}
+
+				const colon = document.createElement("colon");
+				label.appendChild(colon);
+		
+				row.appendChild(label);
+				break;
+			}
 		}
 
 		// Add out connectors

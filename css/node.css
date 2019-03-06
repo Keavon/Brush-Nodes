@@ -1,17 +1,23 @@
 section {
 	position: absolute;
 	width: 256px;
-	border-radius: 10px 10px 5px 5px;
+	border-radius: 0 0 5px 5px;
 	box-shadow: 0 0 20px black;
-	background: hsl(0, 0%, 25%);
+	background: hsla(0, 0%, 25%, 0.8);
 	z-index: 1;
 	padding-bottom: 8px;
+
+	margin-top: 24px;
+}
+
+section.selected,
+section.selected h1 {
+	border: 1px solid white;
 }
 
 section.selected {
-	border: 1px solid white;
 	border-top: none;
-	transform: translate(-1px, -1px);
+	transform: translate(-1px, 0);
 }
 
 section .row {
@@ -31,23 +37,26 @@ section label {
 	font-size: 14px;
 	font-weight: 400;
 	line-height: 24px;
+	height: 24px;
 	margin: 0;
 	padding: 0 16px;
 }
 
 section h1 {
-	background: rgb(0, 156, 184);
+	background: rgba(0, 156, 184, 0.8);
 	border-radius: 5px 5px 0 0;
+
+	margin-top: -24px;
 }
 
 section.selected h1 {
-	border: 1px solid white;
 	border-bottom: none;
 	box-sizing: content-box;
 	width: calc(100% - 16px - 16px);
-	padding-top: 1px;
-	margin-bottom: -1px;
+	height: 23px;
 	transform: translate(-1px, -1px);
+	padding-bottom: 1px;
+	margin-bottom: -1px;
 }
 
 section .row.thumbnail {
@@ -77,9 +86,10 @@ section label input ~ .colon {
 	display: inline;
 }
 
-section label input {
+section label input,
+section select {
 	z-index: -1;
-	background: hsl(0, 0%, 40%);
+	background: hsla(0, 0%, 40%, 0.8);
 	display: block;
 	outline: none;
 	border: none;
@@ -107,6 +117,21 @@ section label:focus-within {
 
 section label:focus-within input {
 	text-align: center;
+}
+
+/* Dropdown input box */
+section select {
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	width: calc(100% - 20px);
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='8'><path d='M4,2 L8,6 L12,2' fill='none' stroke='white' stroke-width='2' /></svg>");
+	background-repeat: no-repeat;
+	background-position: right 3px center;
+}
+
+section select option {
+	background: hsl(0, 0%, 10%);
 }
 
 /* In/out connector dots */
