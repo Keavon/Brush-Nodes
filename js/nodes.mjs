@@ -56,7 +56,7 @@ const blendBlueprint = {
 	],
 };
 
-import { renderThumbnail } from "./main.js"
+import { renderThumbnail } from "./main.mjs"
 
 const nodeDatabase = [];
 
