@@ -339,11 +339,17 @@ function destroyWirePath(path) {
 }
 
 function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
-	// Prevent connecting nodes from input to input or output to output
+	// Prevent connecting nodes as input->input or output->output
 	if (outNodeData.outConnections[outNodeIdentifier] === undefined || inNodeData.inConnections[inNodeIdentifier] === undefined) return;
 
 	// Prevent connecting a node to itself
 	if (outNodeData === inNodeData) return;
+
+	// Prevent adding duplicate identical connections
+	if (
+		outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier === inNodeIdentifier).length > 0 &&
+		inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier === outNodeIdentifier).length > 0
+	) return;
 
 	// Connect the wire to the output
 	const outConnection = { node: inNodeData, identifier: inNodeIdentifier, wire: null };
