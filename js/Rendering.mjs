@@ -14,7 +14,7 @@ const billboardShader = {
 }
 
 export function renderThumbnail(canvas) {
-	const gl = canvas.getContext("webgl");
+	const gl = canvas.getContext("webgl2");
 	load(gl);
 }
 
@@ -169,6 +169,6 @@ function linkProgram(gl, vertexShader, fragmentShader) {
 	const success = gl.getProgramParameter(program, gl.LINK_STATUS);
 	if (success) return program;
 
-	console.log(gl.getProgramInfoLog(program));
-	gl.deleteProgram(program);
+	var info = gl.getProgramInfoLog(program);
+	throw new Error('Could not compile WebGL program:\n\n' + info);
 }

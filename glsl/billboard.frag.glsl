@@ -1,10 +1,14 @@
+#version 300 es
+
 precision mediump float;
 
 uniform vec2 u_resolution;
-uniform float u_scale;
 uniform float u_seed;
+uniform float u_scale;
 
-varying vec2 v_texCoord;
+in vec2 v_texCoord;
+
+out vec4 Color;
 
 // Modified from https://github.com/ashima/webgl-noise/blob/master/src/classicnoise2D.glsl
 
@@ -90,5 +94,5 @@ void main() {
 	// else gl_FragColor = vec4(0, 0, 0, 1);
 	
 	float noiseAtFragment = pnoise(v_texCoord * u_scale, vec2(u_scale, u_scale), u_seed);
-	gl_FragColor = vec4(noiseAtFragment, noiseAtFragment, noiseAtFragment, 1);
+	Color = vec4(noiseAtFragment, noiseAtFragment, noiseAtFragment, 1);
 }
