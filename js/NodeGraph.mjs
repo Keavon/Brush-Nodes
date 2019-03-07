@@ -1,62 +1,7 @@
-const perlinBlueprint = {
-	name: "Perlin Noise",
-	properties: [
-		{
-			name: "THUMBNAIL",
-			display: "thumbnail",
-			out: ["2d_color_pattern"],
-			in: [],
-		},
-		{
-			name: "Scale",
-			display: "input",
-			out: [],
-			in: ["0d_float_scale"],
-			min: 1,
-			max: Infinity,
-			default: 10,
-		},
-		{
-			name: "Seed",
-			display: "input",
-			out: [],
-			in: ["0d_int_seed"],
-			min: -Infinity,
-			max: Infinity,
-			default: 0,
-		},
-	],
-};
+import * as Node from "./Node.mjs";
 
-const blendBlueprint = {
-	name: "Blend",
-	properties: [
-		{
-			name: "THUMBNAIL",
-			display: "thumbnail",
-			out: ["2d_color_composite"],
-			in: ["2d_color_foreground", "2d_color_background"],
-		},
-		{
-			name: "Blend Mode",
-			display: "dropdown",
-			out: [],
-			in: [],
-			default: "Normal",
-		},
-		{
-			name: "Opacity",
-			display: "input",
-			out: [],
-			in: ["0d_float_opacity"],
-			min: 0,
-			max: 1,
-			default: 0.5,
-		},
-	],
-};
-
-import { renderThumbnail } from "./main.mjs"
+import * as PerlinNoise from "../nodes/PerlinNoise.mjs";
+import * as Blend from "../nodes/Blend.mjs";
 
 const nodeDatabase = [];
 
@@ -65,14 +10,21 @@ let cursorWireDirectionOnNodeSide = null;
 
 let draggingSelection = false;
 let selectionWasDragged = false;
+let dragInitiationTarget;
 
-export function nodes() {
-	const perlin1 = createNode(perlinBlueprint, 50, 50);
-	const perlin2 = createNode(perlinBlueprint, 50, 500);
-	const blend = createNode(blendBlueprint, 1000, 300);
+export default function initGraph() {
+	const perlin1 = Node.constructNode(PerlinNoise.getBlueprint(), 50, 50, false);
+	const perlin2 = Node.constructNode(PerlinNoise.getBlueprint(), 50, 500, false);
+	const perlin3 = Node.constructNode(PerlinNoise.getBlueprint(), 1000, 100, false);
+	const blend1 = Node.constructNode(Blend.getBlueprint(), 600, 350, false);
+	const blend2 = Node.constructNode(Blend.getBlueprint(), 1400, 400, false);
+	nodeDatabase.push(perlin1, perlin2, perlin3, blend1, blend2);
 	
-	connectWire(perlin1, "2d_color_pattern", blend, "2d_color_foreground");
-	connectWire(perlin2, "2d_color_pattern", blend, "2d_color_background");
+	connectWire(perlin1, "pattern", blend1, "foreground");
+	connectWire(perlin2, "pattern", blend1, "background");
+	connectWire(perlin3, "pattern", blend2, "foreground");
+	connectWire(blend1, "composite", blend2, "background");
+
 	setupEvents();
 }
 
@@ -85,6 +37,7 @@ function setupEvents() {
 
 function nodeMousedownHandler(event) {
 	const target = event.target;
+	dragInitiationTarget = target;
 
 	// No nodes selected (clear selection)
 	if (!target.closest("section")) {
@@ -150,6 +103,11 @@ function nodeMousedownHandler(event) {
 
 		return;
 	}
+
+	// Prevent dragging the background from highlighting text
+	if (dragInitiationTarget === document.body) {
+		event.preventDefault();
+	}
 }
 
 function nodeMousemoveHandler(event) {
@@ -170,10 +128,16 @@ function nodeMousemoveHandler(event) {
 		// Prevent mouse drag from highlighting text
 		event.preventDefault();
 	}
+
+	// Prevent dragging the background from highlighting text
+	if (dragInitiationTarget === document.body) {
+		event.preventDefault();
+	}
 }
 
 function nodeMouseupHandler(event) {
 	const target = event.target;
+	dragInitiationTarget = undefined;
 
 	if (target.closest("section")) {
 		const nodeElement = target.closest("section");
@@ -342,16 +306,13 @@ function destroyWirePath(path) {
 
 function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
 	// Prevent connecting nodes as input->input or output->output
-	if (outNodeData.outConnections[outNodeIdentifier] === undefined || inNodeData.inConnections[inNodeIdentifier] === undefined) return;
+	if (!(outNodeIdentifier in outNodeData.outConnections && inNodeIdentifier in inNodeData.inConnections)) return;
 
 	// Prevent connecting a node to itself
 	if (outNodeData === inNodeData) return;
 
 	// Prevent adding duplicate identical connections
-	if (
-		outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier === inNodeIdentifier).length > 0 &&
-		inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier === outNodeIdentifier).length > 0
-	) return;
+	if (connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier)) return;
 
 	// Connect the wire to the output
 	const outConnection = { node: inNodeData, identifier: inNodeIdentifier, wire: null };
@@ -359,8 +320,8 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 
 	// Clear any existing inputs because inputs are exclusive to one wire
 	inNodeData.inConnections[inNodeIdentifier].forEach((inConnectionSource) => {
-		outNodeDataForConnection = inConnectionSource.node;
-		outNodeIdentifierForConnection = inConnectionSource.identifier;
+		const outNodeDataForConnection = inConnectionSource.node;
+		const outNodeIdentifierForConnection = inConnectionSource.identifier;
 		disconnectWire(outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier);
 	});
 
@@ -376,131 +337,25 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 	inConnection.wire = wire;
 }
 
+function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+	const outConnector = outNodeData.outConnections[outNodeIdentifier];
+	const outConnection = outConnector.find(c => c.identifier === inNodeIdentifier);
+	
+	const inConnector = inNodeData.inConnections[inNodeIdentifier];
+	const inConnection = inConnector.find(c => c.identifier === outNodeIdentifier);
+
+	if (!outConnection || !inConnection) return false;
+
+	const inNodeDataConnectedToOutConnection = outConnection.node;
+	const outNodeConnectedToInConnection = inConnection.node;
+
+	return inNodeDataConnectedToOutConnection === inNodeData && outNodeConnectedToInConnection === outNodeData;
+}
+
 function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
-	const path = outNodeData.outConnections[outNodeIdentifier].find(connection => connection.identifier === inNodeIdentifier).wire;
-	destroyWirePath(path);
+	const wirePath = outNodeData.outConnections[outNodeIdentifier].find(connection => connection.node === inNodeData && connection.identifier === inNodeIdentifier).wire;
+	destroyWirePath(wirePath);
 
 	outNodeData.outConnections[outNodeIdentifier] = outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier !== inNodeIdentifier);
 	inNodeData.inConnections[inNodeIdentifier] = inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier !== outNodeIdentifier);
-}
-
-function createNode(blueprint, xDestination, yDestination) {
-	const node = document.createElement("section");
-	node.style.left = `${xDestination}px`;
-	node.style.top = `${yDestination}px`;
-
-	const title = document.createElement("h1");
-	title.innerHTML = blueprint.name;
-	node.appendChild(title);
-
-	blueprint.properties.forEach((property) => {
-		// Create property row
-		const row = document.createElement("div");
-		row.classList.add("row");
-		row.classList.add(property.display);
-
-		// Add in connectors
-		appendConnectors(row, property.in, "in");
-
-		switch (property.display) {
-			case "thumbnail": {
-				const canvas = document.createElement("canvas");
-				row.appendChild(canvas);
-				renderThumbnail(canvas);
-				break;
-			}
-			case "label":
-			case "input":
-			case "dropdown": {
-				const label = document.createElement("label");
-				label.innerHTML = property.name;
-
-				if (property.display === "input") {
-					const input = document.createElement("input");
-					input.value = property.default;
-					label.appendChild(input);
-				}
-
-				if (property.display === "dropdown") {
-					label.innerHTML = "";
-					const dropdown = document.createElement("select");
-
-					["Normal", "Multiply", "Screen", "Overlay"].forEach((optionText) => {
-						const option = document.createElement("option");
-						if (optionText === property.default) option.setAttributeNode(document.createAttribute("selected"));
-						option.innerHTML = optionText;
-						dropdown.appendChild(option);
-					});
-
-					label.appendChild(dropdown);
-				}
-
-				const colon = document.createElement("colon");
-				label.appendChild(colon);
-		
-				row.appendChild(label);
-				break;
-			}
-		}
-
-		// Add out connectors
-		appendConnectors(row, property.out, "out");
-
-		// Add property row to node
-		node.appendChild(row);
-	});
-	
-	document.body.appendChild(node);
-
-	const nodeData = {
-		name: blueprint.name,
-		blueprint: blueprint,
-		element: node,
-		selected: false,
-		x: xDestination,
-		y: yDestination,
-		outConnections: getOutIdentifiersMap(blueprint),
-		inConnections: getInIdentifiersMap(blueprint),
-	};
-
-	nodeDatabase.push(nodeData);
-	return nodeData;
-}
-
-function getOutIdentifiersFromBlueprint(blueprint) {
-	return blueprint.properties.filter(p => p.out && p.out.length >= 1).reduce((a, b) => a.concat(b.out), []);
-}
-
-function getInIdentifiersFromBlueprint(blueprint) {
-	return blueprint.properties.filter(p => p.in && p.in.length >= 1).reduce((a, b) => a.concat(b.in), []);
-}
-
-function getOutIdentifiersMap(blueprint) {
-	const outMap = {};
-	getOutIdentifiersFromBlueprint(blueprint).forEach((identifier) => {
-		outMap[identifier] = [];
-	});
-	return outMap;
-}
-
-function getInIdentifiersMap(blueprint) {
-	const inMap = {};
-	getInIdentifiersFromBlueprint(blueprint).forEach((identifier) => {
-		inMap[identifier] = [];
-	});
-	return inMap;
-}
-
-function appendConnectors(row, identifierList, inOrOut) {
-	identifierList.forEach((identifier, index) => {
-		row.classList.add(inOrOut);
-
-		const connector = document.createElement("div");
-		connector.classList.add("connector");
-		connector.classList.add(`group-${index + 1}-of-${identifierList.length}`);
-		connector.dataset["identifier"] = identifier;
-		connector.dataset["direction"] = inOrOut;
-
-		row.appendChild(connector);
-	});
 }

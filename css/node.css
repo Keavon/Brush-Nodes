@@ -140,11 +140,101 @@ section .connector {
 	top: 0;
 	bottom: 0;
 	margin: auto;
+	width: 10px;
+	height: 10px;
+	border: 1px solid white;
+}
+
+section .connector.in {
+	left: -6px;
+}
+
+section .connector.out {
+	right: -6px;
+}
+
+/* Connector dot dimension shapes */
+section .connector.dimensions-0d {
+	border-radius: 50%;
+}
+
+section .connector.dimensions-1d {
+	border: none;
+}
+
+section .connector.dimensions-1d::before,
+section .connector.dimensions-1d::after {
+	content: "";
+	display: block;
+	width: 2px;
+	height: 10px;
+	position: absolute;
+	top: -1px;
+	border: 1px solid white;
+}
+
+section .connector.dimensions-1d::before {
+	border-radius: 2px 0 0 2px;
+	border-right: none;
+	left: -1px;
+}
+
+section .connector.dimensions-1d::after {
+	border-radius: 0 2px 2px 0;
+	border-left: none;
+	right: -1px;
+}
+
+section .connector.dimensions-2d {
+	border-radius: 2px;
+}
+
+section .connector.dimensions-3d {
+	transform: rotate(45deg);
 	width: 8px;
 	height: 8px;
-	background: white;
-	border: 1px solid black;
-	border-radius: 50%;
+	border-radius: 2px;
+}
+
+section .connector.dimensions-3d.in {
+	left: -5px;
+}
+
+section .connector.dimensions-3d.out {
+	right: -5px;
+}
+
+/* Connector dot data type colors */
+section .connector.float {
+	background: hsl(0, 0%, 20%);
+}
+
+section .connector.float2 {
+	background: hsl(0, 0%, 40%);
+}
+
+section .connector.float3 {
+	background: hsl(0, 0%, 60%);
+}
+
+section .connector.float4 {
+	background: hsl(0, 0%, 80%);
+}
+
+section .connector.int {
+	background: indigo;
+}
+
+section .connector.bool {
+	background: steelblue;
+}
+
+section .connector.string {
+	background: limegreen;
+}
+
+section .connector.color {
+	background: coral;
 }
 
 /* Offsets for multiple nodes in a group */
@@ -177,18 +267,6 @@ section .connector.group-4-of-4 {
 
 section .connector:hover {
 	background: hsl(0, 0%, 75%);
-}
-
-section .row.in.out .connector,
-section .row.in:not(.out) .connector {
-	left: -5px;
-	right: unset;
-}
-
-section .row.out:not(.in) .connector,
-section .row.in.out :not(.connector) + .connector {
-	left: unset;
-	right: -5px;
 }
 
 /* Wires */

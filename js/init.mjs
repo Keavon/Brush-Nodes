@@ -1,3 +1,3 @@
-import { nodes } from "./nodes.mjs"
+import NodeGraph from "./NodeGraph.mjs";
 
-nodes();
+NodeGraph();
