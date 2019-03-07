@@ -63,6 +63,10 @@ function nodeMousedownHandler(event) {
 		return;
 	}
 
+	if (target.closest("select")) {
+		return;
+	}
+
 	if (target.closest("input")) {
 		// Prevent input selection until click handler
 		if (target !== document.activeElement) event.preventDefault();

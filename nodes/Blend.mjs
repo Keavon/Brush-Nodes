@@ -25,8 +25,8 @@ const blueprint = {
 		{
 			identifier: "opacity",
 			direction: "in",
-			dimensions: "0d",
-			type: "float",
+			dimensions: "2d",
+			type: "color",
 			constraints: { default: 0.5, min: 0, max: 1 }
 		},
 		{
@@ -62,7 +62,7 @@ const blueprint = {
 				inputBoundIdentifier: "opacity",
 			},
 			connectors: [
-				{ identifier: "opacity", direction: "in", dimensions: "0d", type: "float" },
+				{ identifier: "opacity", direction: "in", dimensions: "2d", type: "color" },
 			],
 		},
 	],
