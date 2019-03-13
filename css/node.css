@@ -1,7 +1,7 @@
 section {
 	position: absolute;
 	width: 256px;
-	border-radius: 0 0 10px 10px;
+	border-radius: 15px 15px 10px 10px;
 	box-shadow: 0 0 20px black;
 	background: hsla(0, 0%, 25%, 0.8);
 	z-index: 1;
@@ -9,14 +9,18 @@ section {
 	transform-origin: top left;
 }
 
-section.selected,
-section.selected h1 {
+.selection-outline {
+	position: absolute;
+	margin-left: -1px;
+	margin-top: -1px;
 	border: 1px solid white;
+	box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+	z-index: 1;
+	pointer-events: none;
 }
 
 section.selected {
-	border-top: none;
-	transform: translate(-1px, 0);
+	box-shadow: none;
 }
 
 section .row {
@@ -43,17 +47,7 @@ section label {
 
 section h1 {
 	background: rgba(0, 156, 184, 0.8);
-	border-radius: 5px 5px 0 0;
-}
-
-section.selected h1 {
-	border-bottom: none;
-	box-sizing: content-box;
-	width: calc(100% - 16px - 16px);
-	height: 23px;
-	transform: translate(-1px, -1px);
-	padding-bottom: 1px;
-	margin-bottom: -1px;
+	border-radius: 10px 10px 0 0;
 }
 
 section .row.thumbnail {

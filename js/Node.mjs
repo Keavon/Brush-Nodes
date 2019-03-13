@@ -36,18 +36,20 @@ export function constructNode(blueprint, xDestination, yDestination, startSelect
 		outConnections: getEmptyConnectionsMap(blueprint, "out"),
 		inValues: getDefaultInValuesMap(blueprint),
 		outValues: getNullOutValuesMap(blueprint),
-		selected: startSelected ? createNodeOutlineElement() : null,
+		selected: null,
 		x: xDestination,
 		y: yDestination,
 	};
 	nodeData.element = createNodeElement(nodeData);
+	if (startSelected) createNodeOutlineElement(nodeData);
 
 	return nodeData;
 }
 
-export function createNodeOutlineElement() {
+export function createNodeOutlineElement(nodeData) {
 	const div = document.createElement("div");
-	document.querySelector(".outlines").appendChild(div);
+	div.classList.add("selection-outline");
+	nodeData.element.insertAdjacentElement("beforebegin", div);
 	return div;
 }
 

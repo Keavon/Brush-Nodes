@@ -309,12 +309,28 @@ function deselectAllNodes() {
 
 function selectNode(nodeData) {
 	nodeData.element.classList.add("selected");
-	nodeData.selected = true;
+	nodeData.selected = Node.createNodeOutlineElement(nodeData);
+	updateSelectionOutline(nodeData);
 }
 
 function deselectNode(nodeData) {
+	if (!nodeData.selected) return;
+
 	nodeData.element.classList.remove("selected");
-	nodeData.selected = false;
+	nodeData.selected.parentNode.removeChild(nodeData.selected);
+	nodeData.selected = null;
+}
+
+function updateSelectionOutline(nodeData) {
+	if (!nodeData.selected) return;
+
+	const bounds = nodeData.element.getBoundingClientRect();
+	const scale = bounds.width / nodeData.element.clientWidth;
+	nodeData.selected.style.width = `${bounds.width}px`;
+	nodeData.selected.style.height = `${bounds.height}px`;
+	nodeData.selected.style.left = `${bounds.left}px`;
+	nodeData.selected.style.top = `${bounds.top}px`;
+	nodeData.selected.style.borderRadius = `${10 * scale}px`;
 }
 
 function updateGraphView() {
@@ -331,6 +347,7 @@ function updateGraphView() {
 
 function updateNodePosition(nodeData) {
 	nodeData.element.style.transform = `translate(${nodeData.x * graphScale + graphOffsetX}px, ${nodeData.y * graphScale + graphOffsetY}px) scale(${graphScale})`;
+	updateSelectionOutline(nodeData);
 
 	// Update any wires connected to out connections
 	Object.keys(nodeData.outConnections).forEach((identifier) => {
