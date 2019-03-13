@@ -48,8 +48,6 @@ export function constructNode(blueprint, xDestination, yDestination, startSelect
 export function createNodeElement(nodeData) {
 	// Create the node container element
 	const nodeElement = document.createElement("section");
-	nodeElement.style.left = `${nodeData.x}px`;
-	nodeElement.style.top = `${nodeData.y}px`;
 
 	// Give it a title element
 	const titleElement = document.createElement("h1");

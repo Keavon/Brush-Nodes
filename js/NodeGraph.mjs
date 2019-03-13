@@ -12,6 +12,14 @@ let draggingSelection = false;
 let selectionWasDragged = false;
 let dragInitiationTarget;
 
+let panningSelection = false;
+let awaitingGraphViewUpdate = false;
+
+let graphOffsetX = 0;
+let graphOffsetY = 0;
+let graphScale = 1;
+const scaleSpeed = 0.1;
+
 export default function initGraph() {
 	const perlin1 = Node.constructNode(PerlinNoise.getBlueprint(), 50, 50, false);
 	const perlin2 = Node.constructNode(PerlinNoise.getBlueprint(), 50, 500, false);
@@ -25,98 +33,132 @@ export default function initGraph() {
 	connectWire(perlin3, "pattern", blend2, "foreground");
 	connectWire(blend1, "composite", blend2, "background");
 
+	updateGraphView();
+
 	setupEvents();
 }
 
 function setupEvents() {
-	document.body.addEventListener("mousedown", nodeMousedownHandler);
-	document.body.addEventListener("mousemove", nodeMousemoveHandler);
-	document.body.addEventListener("mouseup", nodeMouseupHandler);
-	document.body.addEventListener("click", nodeClickHandler);
+	document.body.addEventListener("mousedown", graphMousedownHandler);
+	document.body.addEventListener("mousemove", graphMousemoveHandler);
+	document.body.addEventListener("mouseup", graphMouseupHandler);
+	document.body.addEventListener("click", graphClickHandler);
+	document.body.addEventListener("wheel", graphWheelHandler);
+	document.body.addEventListener("keydown", graphKeydownHandler);
 }
 
-function nodeMousedownHandler(event) {
+function graphKeydownHandler(event) {
+	if (event.key.toLowerCase() === "a" && event.ctrlKey) {
+		if (event.shiftKey) deselectAllNodes();
+		else selectAllNodes();
+		
+		event.preventDefault();
+		return;
+	}
+}
+
+function graphMousedownHandler(event) {
 	const target = event.target;
 	dragInitiationTarget = target;
 
-	// No nodes selected (clear selection)
-	if (!target.closest("section")) {
-		deselectAllNodes();
-		return;
-	}
-
-	// Connector dot selected
-	if (target.closest("div.connector")) {
-		const connector = target.closest("div.connector");
-		const mousePosition = [event.clientX, event.clientY];
-		
-		let path;
-		cursorWireDirectionOnNodeSide = connector.dataset["direction"];
-		if (cursorWireDirectionOnNodeSide === "out") path = createWirePath(connector, mousePosition);
-		else if (cursorWireDirectionOnNodeSide === "in") path = createWirePath(mousePosition, connector);
-
-		cursorWireConnection = { node: null, identifier: null, wire: null };
-		cursorWireConnection.node = nodeDatabase.find(node => node.element === connector.closest("section"));
-		cursorWireConnection.identifier = connector.dataset["identifier"];
-		cursorWireConnection.wire = path;
-
-		return;
-	}
-
-	if (target.closest("select")) {
-		return;
-	}
-
-	if (target.closest("input")) {
-		// Prevent input selection until click handler
-		if (target !== document.activeElement) event.preventDefault();
-		event.stopPropagation();
-		return;
-	}
-
-	// Node selected
-	if (target.closest("section")) {
-		const nodeElement = target.closest("section");
-		const nodeData = nodeDatabase.find(node => node.element === nodeElement);
-
-		if (nodeData.selected) {
-			if (event.shiftKey || event.ctrlKey) {
-				deselectNode(nodeData);
-
-				// Prevent shift-selection from highlighting text
-				event.preventDefault();
-			}
-			else {
-				draggingSelection = true;
-			}
-		}
-		else {
-			if (event.shiftKey || event.ctrlKey) {
-				selectNode(nodeData);
-				draggingSelection = true;
-
-				// Prevent shift-selection from highlighting text
-				event.preventDefault();
-			}
-			else {
-				deselectAllNodes();
-				selectNode(nodeData);
-				draggingSelection = true;
-			}
+	// Left mouse button
+	if (event.button === 0) {
+		// No nodes selected (clear selection)
+		if (!target.closest("section")) {
+			deselectAllNodes();
+			return;
 		}
 
-		return;
+		// Connector dot selected
+		if (target.closest("div.connector")) {
+			const connector = target.closest("div.connector");
+			const mousePosition = [event.clientX, event.clientY];
+			
+			let path;
+			cursorWireDirectionOnNodeSide = connector.dataset["direction"];
+			if (cursorWireDirectionOnNodeSide === "out") path = createWirePath(connector, mousePosition);
+			else if (cursorWireDirectionOnNodeSide === "in") path = createWirePath(mousePosition, connector);
+
+			cursorWireConnection = { node: null, identifier: null, wire: null };
+			cursorWireConnection.node = nodeDatabase.find(node => node.element === connector.closest("section"));
+			cursorWireConnection.identifier = connector.dataset["identifier"];
+			cursorWireConnection.wire = path;
+
+			return;
+		}
+
+		if (target.closest("select")) {
+			return;
+		}
+
+		if (target.closest("input")) {
+			// Prevent input selection until click handler
+			if (target !== document.activeElement) event.preventDefault();
+			event.stopPropagation();
+			return;
+		}
+
+		// Node selected
+		if (target.closest("section")) {
+			const nodeElement = target.closest("section");
+			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
+
+			if (nodeData.selected) {
+				if (event.shiftKey || event.ctrlKey) {
+					deselectNode(nodeData);
+
+					// Prevent shift-selection from highlighting text
+					event.preventDefault();
+				}
+				else {
+					draggingSelection = true;
+				}
+			}
+			else {
+				if (event.shiftKey || event.ctrlKey) {
+					selectNode(nodeData);
+					draggingSelection = true;
+
+					// Prevent shift-selection from highlighting text
+					event.preventDefault();
+				}
+				else {
+					deselectAllNodes();
+					selectNode(nodeData);
+					draggingSelection = true;
+				}
+			}
+
+			return;
+		}
+
+		// Prevent dragging the background from highlighting text
+		if (dragInitiationTarget === document.body) {
+			event.preventDefault();
+		}
 	}
 
-	// Prevent dragging the background from highlighting text
-	if (dragInitiationTarget === document.body) {
-		event.preventDefault();
+	// Middle mouse button
+	if (event.button === 1) {
+		if (!panningSelection) {
+			panningSelection = true;
+			return;
+		}
 	}
 }
 
-function nodeMousemoveHandler(event) {
+function graphMousemoveHandler(event) {
+	const mousePosition = [event.clientX, event.clientY];
+	const mouseDelta = [event.movementX / graphScale, event.movementY / graphScale];
+
+	if (panningSelection && (event.movementX !== 0 || event.movementY !== 0)) {
+		graphOffsetX += mouseDelta[0] * graphScale;
+		graphOffsetY += mouseDelta[1] * graphScale;
+		updateGraphView();
+	}
+
 	if (draggingSelection) {
-		moveSelectedNodes(event.movementX, event.movementY);
+		moveSelectedNodes(mouseDelta);
 		
 		// Prevent mouse drag from highlighting text
 		event.preventDefault();
@@ -124,7 +166,6 @@ function nodeMousemoveHandler(event) {
 
 	if (cursorWireConnection) {
 		const attachedConnectorElement = cursorWireConnection.node.element.querySelector(`.connector[data-identifier="${cursorWireConnection.identifier}"]`);
-		const mousePosition = [event.clientX, event.clientY];
 		
 		if (cursorWireDirectionOnNodeSide === "out") updateWire(cursorWireConnection.wire, attachedConnectorElement, mousePosition);
 		else if (cursorWireDirectionOnNodeSide === "in") updateWire(cursorWireConnection.wire, mousePosition, attachedConnectorElement);
@@ -139,45 +180,57 @@ function nodeMousemoveHandler(event) {
 	}
 }
 
-function nodeMouseupHandler(event) {
+function graphMouseupHandler(event) {
 	const target = event.target;
-	dragInitiationTarget = undefined;
 
-	if (target.closest("section")) {
-		const nodeElement = target.closest("section");
-		const nodeData = nodeDatabase.find(node => node.element === nodeElement);
+	// Left mouse button
+	if (event.button === 0) {
+		dragInitiationTarget = undefined;
 
-		if (nodeData.selected && !event.shiftKey && !selectionWasDragged) {
-			deselectAllNodes();
-			selectNode(nodeData);
-		}
-	}
-
-	if (cursorWireConnection) {
-		const nodeSideData = cursorWireConnection.node;
-		const nodeSideIdentifier = cursorWireConnection.identifier;
-
-		if (target.closest(".connector")) {
+		if (target.closest("section")) {
 			const nodeElement = target.closest("section");
 			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
-			const nodeIdentifier = target.closest(".connector").dataset["identifier"];
-			
-			if (cursorWireDirectionOnNodeSide === "out") connectWire(nodeSideData, nodeSideIdentifier, nodeData, nodeIdentifier);
-			else if (cursorWireDirectionOnNodeSide === "in") connectWire(nodeData, nodeIdentifier, nodeSideData, nodeSideIdentifier);
+
+			if (nodeData.selected && !event.shiftKey && !selectionWasDragged) {
+				deselectAllNodes();
+				selectNode(nodeData);
+			}
 		}
 
-		const path = cursorWireConnection.wire;
-		destroyWirePath(path);
+		if (cursorWireConnection) {
+			const nodeSideData = cursorWireConnection.node;
+			const nodeSideIdentifier = cursorWireConnection.identifier;
 
-		cursorWireConnection = null;
-		cursorWireDirectionOnNodeSide = null;
+			if (target.closest(".connector")) {
+				const nodeElement = target.closest("section");
+				const nodeData = nodeDatabase.find(node => node.element === nodeElement);
+				const nodeIdentifier = target.closest(".connector").dataset["identifier"];
+				
+				if (cursorWireDirectionOnNodeSide === "out") connectWire(nodeSideData, nodeSideIdentifier, nodeData, nodeIdentifier);
+				else if (cursorWireDirectionOnNodeSide === "in") connectWire(nodeData, nodeIdentifier, nodeSideData, nodeSideIdentifier);
+			}
+
+			const path = cursorWireConnection.wire;
+			destroyWirePath(path);
+
+			cursorWireConnection = null;
+			cursorWireDirectionOnNodeSide = null;
+		}
+
+		draggingSelection = false;
+		selectionWasDragged = false;
 	}
 
-	draggingSelection = false;
-	selectionWasDragged = false;
+	// Middle mouse button
+	if (event.button === 1) {
+		if (panningSelection) {
+			panningSelection = false;
+			return;
+		}
+	}
 }
 
-function nodeClickHandler(event) {
+function graphClickHandler(event) {
 	const target = event.target;
 
 	if (target.closest("input")) {
@@ -188,16 +241,35 @@ function nodeClickHandler(event) {
 	}
 }
 
-function moveSelectedNodes(dx, dy) {
+function graphWheelHandler(event) {
+	const minScale = 0.1;
+	const maxScale = 2.0;
+
+	let deltaScale = graphScale * scaleSpeed * (event.deltaY / -100);
+	const newScale = graphScale + deltaScale;
+	const newScaleClamped = Math.min(Math.max(newScale, minScale), maxScale);
+	const clampedExcess = newScale - newScaleClamped;
+	const deltaScaleClamped = deltaScale - clampedExcess;
+
+	graphScale = newScaleClamped;
+	graphOffsetX -= deltaScaleClamped * event.target.closest("body").clientWidth / 2;
+	graphOffsetY -= deltaScaleClamped * event.target.closest("body").clientHeight / 2;
+
+	updateGraphView();
+
+	event.preventDefault();
+}
+
+function moveSelectedNodes(deltaMove) {
 	nodeDatabase.forEach((nodeData) => {
 		if (nodeData.selected) {
-			nodeData.x += dx;
-			nodeData.y += dy;
+			nodeData.x += deltaMove[0];
+			nodeData.y += deltaMove[1];
 			updateNodePosition(nodeData);
 		}
 	});
 
-	if (dx !== 0 || dy !== 0) selectionWasDragged = true;
+	if (deltaMove[0] !== 0 || deltaMove[1] !== 0) selectionWasDragged = true;
 }
 
 function selectAllNodes() {
@@ -222,9 +294,20 @@ function deselectNode(nodeData) {
 	nodeData.selected = false;
 }
 
+function updateGraphView() {
+	if (!awaitingGraphViewUpdate) {
+		requestAnimationFrame(() => {
+			nodeDatabase.forEach((node) => {
+				updateNodePosition(node);
+			});
+			awaitingGraphViewUpdate = false;
+		});
+	}
+	awaitingGraphViewUpdate = true;
+}
+
 function updateNodePosition(nodeData) {
-	nodeData.element.style.left = `${nodeData.x}px`;
-	nodeData.element.style.top = `${nodeData.y}px`;
+	nodeData.element.style.transform = `translate(${nodeData.x * graphScale + graphOffsetX}px, ${nodeData.y * graphScale + graphOffsetY}px) scale(${graphScale})`;
 
 	// Update any wires connected to out connections
 	Object.keys(nodeData.outConnections).forEach((identifier) => {

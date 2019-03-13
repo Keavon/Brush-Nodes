@@ -4,4 +4,5 @@ html, body {
 	margin: 0;
 	font-family: 'Yantramanav', sans-serif;
 	background: hsl(0, 0%, 12%);
+	overflow: hidden;
 }
