@@ -73,16 +73,39 @@ function graphMousedownHandler(event) {
 		if (target.closest("div.connector")) {
 			const connector = target.closest("div.connector");
 			const mousePosition = [event.clientX, event.clientY];
+			const identifier = connector.dataset["identifier"];
+			const nodeElement = connector.closest("section");
+			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
+			const connectorInput = nodeData.inConnections[identifier];
 			
-			let path;
+			let targetPath;
+			let targetNode = nodeData;
+			let targetIdentifier = identifier;
 			cursorWireDirectionOnNodeSide = connector.dataset["direction"];
-			if (cursorWireDirectionOnNodeSide === "out") path = createWirePath(connector, mousePosition);
-			else if (cursorWireDirectionOnNodeSide === "in") path = createWirePath(mousePosition, connector);
+			// Creating a new connection from output to mouse
+			if (cursorWireDirectionOnNodeSide === "out") {
+				targetPath = createWirePath(connector, mousePosition);
+			}
+			// Creating a new connection from mouse to input
+			else if (cursorWireDirectionOnNodeSide === "in" && connectorInput.length == 0) {
+				targetPath = createWirePath(mousePosition, connector);
+			}
+			// Moving an existing connection
+			else if (cursorWireDirectionOnNodeSide === "in" && connectorInput.length > 0) {
+				const sourceSide = connectorInput[0];
+				disconnectWire(sourceSide.node, sourceSide.identifier, nodeData, identifier);
+				
+				const connectorElement = sourceSide.node.element.querySelector(`.connector[data-identifier="${sourceSide.identifier}"]`);
+				cursorWireDirectionOnNodeSide = "out";
+				targetNode = sourceSide.node;
+				targetIdentifier = sourceSide.identifier;
+				targetPath = createWirePath(connectorElement, mousePosition);
+			}
 
 			cursorWireConnection = { node: null, identifier: null, wire: null };
-			cursorWireConnection.node = nodeDatabase.find(node => node.element === connector.closest("section"));
-			cursorWireConnection.identifier = connector.dataset["identifier"];
-			cursorWireConnection.wire = path;
+			cursorWireConnection.node = targetNode;
+			cursorWireConnection.identifier = targetIdentifier;
+			cursorWireConnection.wire = targetPath;
 
 			return;
 		}
@@ -424,6 +447,14 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 	inConnection.wire = wire;
 }
 
+function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+	const wirePath = outNodeData.outConnections[outNodeIdentifier].find(connection => connection.node === inNodeData && connection.identifier === inNodeIdentifier).wire;
+	destroyWirePath(wirePath);
+
+	outNodeData.outConnections[outNodeIdentifier] = outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier !== inNodeIdentifier);
+	inNodeData.inConnections[inNodeIdentifier] = inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier !== outNodeIdentifier);
+}
+
 function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
 	const outConnector = outNodeData.outConnections[outNodeIdentifier];
 	const outConnection = outConnector.find(c => c.identifier === inNodeIdentifier);
@@ -437,12 +468,4 @@ function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inN
 	const outNodeConnectedToInConnection = inConnection.node;
 
 	return inNodeDataConnectedToOutConnection === inNodeData && outNodeConnectedToInConnection === outNodeData;
-}
-
-function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
-	const wirePath = outNodeData.outConnections[outNodeIdentifier].find(connection => connection.node === inNodeData && connection.identifier === inNodeIdentifier).wire;
-	destroyWirePath(wirePath);
-
-	outNodeData.outConnections[outNodeIdentifier] = outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier !== inNodeIdentifier);
-	inNodeData.inConnections[inNodeIdentifier] = inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier !== outNodeIdentifier);
 }
