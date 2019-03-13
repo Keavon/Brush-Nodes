@@ -138,16 +138,18 @@ function graphMousedownHandler(event) {
 				}
 			}
 			else {
+				// Add to current selection
 				if (event.shiftKey || event.ctrlKey) {
-					selectNode(nodeData);
+					selectNode(nodeData, true);
 					draggingSelection = true;
 
 					// Prevent shift-selection from highlighting text
 					event.preventDefault();
 				}
+				// Replace current selection
 				else {
 					deselectAllNodes();
-					selectNode(nodeData);
+					selectNode(nodeData, true);
 					draggingSelection = true;
 				}
 			}
@@ -210,13 +212,14 @@ function graphMouseupHandler(event) {
 	if (event.button === 0) {
 		dragInitiationTarget = undefined;
 
+		// Replace current selection if the selected group was not moved when clicking on a selected node
 		if (target.closest("section")) {
 			const nodeElement = target.closest("section");
 			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
 
-			if (nodeData.selected && !event.shiftKey && !selectionWasDragged) {
+			if (nodeData.selected && !event.shiftKey && !event.ctrlKey && !selectionWasDragged) {
 				deselectAllNodes();
-				selectNode(nodeData);
+				selectNode(nodeData, true);
 			}
 		}
 
@@ -297,7 +300,7 @@ function moveSelectedNodes(deltaMove) {
 
 function selectAllNodes() {
 	nodeDatabase.forEach((nodeData) => {
-		selectNode(nodeData);
+		selectNode(nodeData, false);
 	});
 }
 
@@ -307,8 +310,11 @@ function deselectAllNodes() {
 	});
 }
 
-function selectNode(nodeData) {
+function selectNode(nodeData, bringToFront) {
+	if (nodeData.selected) return;
+
 	nodeData.element.classList.add("selected");
+	if (bringToFront) nodeData.element.parentNode.insertAdjacentElement("beforeend", nodeData.element);
 	nodeData.selected = Node.createNodeOutlineElement(nodeData);
 	updateSelectionOutline(nodeData);
 }
