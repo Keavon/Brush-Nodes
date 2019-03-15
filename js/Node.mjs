@@ -134,6 +134,7 @@ function appendConnectors(row, rowElement, direction) {
 		connectorElement.dataset["direction"] = connector.direction;
 		connectorElement.dataset["dimensions"] = connector.dimensions;
 		connectorElement.dataset["type"] = connector.type;
+		connectorElement.dataset[`${direction}degree`] = 0;
 
 		// Add it to the row
 		rowElement.appendChild(connectorElement);

@@ -468,8 +468,11 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
 	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
-	const wire = createWirePath(outConnector, inConnector);
 
+	outConnector.dataset["outdegree"]++;
+	inConnector.dataset["indegree"]++;
+
+	const wire = createWirePath(outConnector, inConnector);
 	outConnection.wire = wire;
 	inConnection.wire = wire;
 }
@@ -480,6 +483,12 @@ function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdenti
 
 	outNodeData.outConnections[outNodeIdentifier] = outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier !== inNodeIdentifier);
 	inNodeData.inConnections[inNodeIdentifier] = inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier !== outNodeIdentifier);
+
+	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
+	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
+
+	outConnector.dataset["outdegree"]--;
+	inConnector.dataset["indegree"]--;
 }
 
 function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
