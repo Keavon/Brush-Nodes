@@ -213,7 +213,7 @@ function graphMouseupHandler(event) {
 		dragInitiationTarget = undefined;
 
 		// Replace current selection if the selected group was not moved when clicking on a selected node
-		if (target.closest("section")) {
+		if (target.closest("section") && !target.closest("input")) {
 			const nodeElement = target.closest("section");
 			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
 
