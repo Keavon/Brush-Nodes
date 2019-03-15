@@ -47,16 +47,6 @@ function setupEvents() {
 	document.body.addEventListener("keydown", graphKeydownHandler);
 }
 
-function graphKeydownHandler(event) {
-	if (event.key.toLowerCase() === "a" && event.ctrlKey) {
-		if (event.shiftKey) deselectAllNodes();
-		else selectAllNodes();
-		
-		event.preventDefault();
-		return;
-	}
-}
-
 function graphMousedownHandler(event) {
 	const target = event.target;
 	dragInitiationTarget = target;
@@ -284,6 +274,20 @@ function graphWheelHandler(event) {
 	updateGraphView();
 
 	event.preventDefault();
+}
+
+function graphKeydownHandler(event) {
+	if (event.key.toLowerCase() === "a" && event.ctrlKey) {
+		if (event.shiftKey) deselectAllNodes();
+		else selectAllNodes();
+		
+		event.preventDefault();
+		return;
+	}
+
+	if (event.key.toLowerCase() === "enter" && document.activeElement.closest("input")) {
+		document.activeElement.closest("input").blur();
+	}
 }
 
 function moveSelectedNodes(deltaMove) {

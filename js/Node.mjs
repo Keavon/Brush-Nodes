@@ -110,9 +110,6 @@ function appendRow(row, nodeData, nodeElement) {
 
 				labelElement.appendChild(dropdownElement);
 			}
-
-			const colonElement = document.createElement("colon");
-			labelElement.appendChild(colonElement);
 	
 			rowElement.appendChild(labelElement);
 			break;

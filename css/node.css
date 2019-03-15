@@ -69,14 +69,6 @@ section label {
 	pointer-events: none;
 }
 
-section label .colon {
-	display: none;
-}
-
-section label input ~ .colon {
-	display: inline;
-}
-
 section label input,
 section select {
 	z-index: -1;
