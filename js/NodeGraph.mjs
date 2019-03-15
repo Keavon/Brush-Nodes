@@ -466,27 +466,34 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
 	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
 
+	// Find the connector dot DOM elements
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
 	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
 
+	// Increment the connection degrees
 	outConnector.dataset["outdegree"]++;
 	inConnector.dataset["indegree"]++;
 
+	// Create an SVG wire path and save its reference on both connection sides
 	const wire = createWirePath(outConnector, inConnector);
 	outConnection.wire = wire;
 	inConnection.wire = wire;
 }
 
 function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+	// Find and destroy the SVG wire path
 	const wirePath = outNodeData.outConnections[outNodeIdentifier].find(connection => connection.node === inNodeData && connection.identifier === inNodeIdentifier).wire;
 	destroyWirePath(wirePath);
 
+	// Filter the out/in connections to not include the in/out identifiers
 	outNodeData.outConnections[outNodeIdentifier] = outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier !== inNodeIdentifier);
 	inNodeData.inConnections[inNodeIdentifier] = inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier !== outNodeIdentifier);
 
+	// Find the connector dot DOM elements
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
 	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
 
+	// Decrement the connection degrees
 	outConnector.dataset["outdegree"]--;
 	inConnector.dataset["indegree"]--;
 }
