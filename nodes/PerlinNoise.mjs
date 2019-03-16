@@ -1,4 +1,4 @@
-const blueprint = {
+const definition = {
 	// Defines the node name shown in its header
 	name: "Perlin Noise",
 	// Defines input and output data model properties
@@ -27,20 +27,23 @@ const blueprint = {
 	// Defines GUI layout information and its bindings to the data model
 	rows: [
 		{
-			// The display type for the row to be rendered as
-			display: "thumbnail",
-			// Option specific to the display type
-			options: {
-				// Tells the thumbnail which output property identifier read its value from to display
-				outputBoundIdentifier: "pattern",
-			},
+			// Unique identifier for this row in the node definition
+			name: "composite_thumbnail",
+			// The widget type for the row to be rendered as
+			type: "thumbnail",
 			// List of any connector dots hosted on the input and output sides of the row
 			connectors: [
 				{ identifier: "pattern", direction: "out", dimensions: "2d", type: "color" },
 			],
+			// Option specific to the widget type
+			options: {
+				// Tells the thumbnail which output property identifier read its value from to display
+				outputBoundIdentifier: "pattern",
+			},
 		},
 		{
-			display: "input",
+			name: "pattern_scale",
+			type: "input",
 			options: {
 				// Tells the input what label to print
 				label: "Scale",
@@ -50,22 +53,29 @@ const blueprint = {
 			connectors: [
 				{ identifier: "scale", direction: "in", dimensions: "0d", type: "float" },
 			],
+			data: {
+				inputValue: 10,
+			},
 		},
 		{
-			display: "input",
+			name: "random_seed",
+			type: "input",
+			connectors: [
+				{ identifier: "seed", direction: "in", dimensions: "0d", type: "int" },
+			],
 			options: {
 				label: "Seed",
 				inputBoundIdentifier: "seed",
 			},
-			connectors: [
-				{ identifier: "seed", direction: "in", dimensions: "0d", type: "int" },
-			],
+			data: {
+				inputValue: 0,
+			},
 		},
 	],
 };
 
-export function getBlueprint() {
-	return blueprint;
+export function getDefinition() {
+	return definition;
 }
 
 export function validateCompatibleInput(identifier, proposedDataType) {

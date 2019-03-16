@@ -1,4 +1,4 @@
-const blueprint = {
+const definition = {
 	name: "Blend",
 	properties: [
 		{
@@ -16,7 +16,7 @@ const blueprint = {
 			constraints: {},
 		},
 		{
-			identifier: "blendMode",
+			identifier: "mode",
 			direction: "in",
 			dimensions: "0d",
 			type: "string",
@@ -38,38 +38,47 @@ const blueprint = {
 	],
 	rows: [
 		{
-			display: "thumbnail",
-			options: {
-				outputBoundIdentifier: "composite",
-			},
+			name: "composite_thumbnail",
+			type: "thumbnail",
 			connectors: [
 				{ identifier: "foreground", direction: "in", dimensions: "2d", type: "color" },
 				{ identifier: "background", direction: "in", dimensions: "2d", type: "color" },
 				{ identifier: "composite", direction: "out", dimensions: "2d", type: "color" },
 			],
-		},
-		{
-			display: "dropdown",
 			options: {
-				inputBoundIdentifier: "blendMode",
+				outputBoundIdentifier: "composite",
 			},
-			connectors: [],
 		},
 		{
-			display: "input",
+			name: "blend_mode",
+			type: "dropdown",
+			connectors: [],
+			options: {
+				inputBoundIdentifier: "mode",
+			},
+			data: {
+				inputValue: 0,
+			},
+		},
+		{
+			name: "opacity_mask",
+			type: "input",
+			connectors: [
+				{ identifier: "opacity", direction: "in", dimensions: "2d", type: "color" },
+			],
 			options: {
 				label: "Opacity",
 				inputBoundIdentifier: "opacity",
 			},
-			connectors: [
-				{ identifier: "opacity", direction: "in", dimensions: "2d", type: "color" },
-			],
+			data: {
+				inputValue: 1,
+			},
 		},
 	],
 };
 
-export function getBlueprint() {
-	return blueprint;
+export function getDefinition() {
+	return definition;
 }
 
 export function validateCompatibleInput(identifier, proposedDataType) {

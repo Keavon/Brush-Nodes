@@ -1,8 +1,5 @@
 import * as Node from "./Node.mjs";
 
-import * as PerlinNoise from "../nodes/PerlinNoise.mjs";
-import * as Blend from "../nodes/Blend.mjs";
-
 const nodeDatabase = [];
 
 let cursorWireConnection = null;
@@ -21,11 +18,11 @@ let graphScale = 1;
 const scaleSpeed = 0.1;
 
 export default function initGraph() {
-	const perlin1 = Node.constructNode(PerlinNoise.getBlueprint(), 50, 50, false);
-	const perlin2 = Node.constructNode(PerlinNoise.getBlueprint(), 50, 500, false);
-	const perlin3 = Node.constructNode(PerlinNoise.getBlueprint(), 1000, 100, false);
-	const blend1 = Node.constructNode(Blend.getBlueprint(), 600, 350, false);
-	const blend2 = Node.constructNode(Blend.getBlueprint(), 1400, 400, false);
+	const perlin1 = Node.createNode("Perlin Noise", 50, 50, false);
+	const perlin2 = Node.createNode("Perlin Noise", 50, 500, false);
+	const perlin3 = Node.createNode("Perlin Noise", 1000, 100, false);
+	const blend1 = Node.createNode("Blend", 600, 350, false);
+	const blend2 = Node.createNode("Blend", 1400, 400, false);
 	nodeDatabase.push(perlin1, perlin2, perlin3, blend1, blend2);
 	
 	connectWire(perlin1, "pattern", blend1, "foreground");

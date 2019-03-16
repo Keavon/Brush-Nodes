@@ -1,7 +1,41 @@
 import { renderThumbnail } from "./Rendering.mjs";
 
-export function getEmptyConnectionsMap(blueprint, direction) {
-	const properties = blueprint.properties.filter(property => property.direction === direction);
+import * as Node_PerlinNoise from "../nodes/PerlinNoise.mjs";
+import * as Node_Blend from "../nodes/Blend.mjs";
+const nodes = {
+	"Perlin Noise": Node_PerlinNoise,
+	"Blend": Node_Blend,
+};
+
+import * as Widget_Input from "../nodes/widgets/Input.mjs";
+const widgets = {
+	"input": Widget_Input,
+};
+
+export function createNode(node, xPlacement, yPlacement, startSelected) {
+	const definition = nodes[node].getDefinition();
+	const nodeData = {
+		name: definition.name,
+		element: undefined,
+		selected: null,
+		inConnections: buildEmptyConnectionsMap(definition, "in"),
+		outConnections: buildEmptyConnectionsMap(definition, "out"),
+		rowStateData: buildRowDataMap(definition),
+		propertyValues: undefined,
+		x: xPlacement,
+		y: yPlacement,
+		inValues: buildDefaultInValuesMap(definition),
+		outValues: buildNullOutValuesMap(definition),
+	};
+	nodeData.element = createNodeElement(nodeData, definition);
+	if (startSelected) createNodeOutlineElement(nodeData);
+	nodeData.propertyValues = computeProperties(nodeData, definition);
+
+	return nodeData;
+}
+
+function buildEmptyConnectionsMap(definition, direction) {
+	const properties = definition.properties.filter(property => property.direction === direction);
 	const connectionsMap = {};
 	properties.forEach((property) => {
 		connectionsMap[property.identifier] = [];
@@ -9,8 +43,17 @@ export function getEmptyConnectionsMap(blueprint, direction) {
 	return connectionsMap;
 }
 
-export function getDefaultInValuesMap(blueprint) {
-	const properties = blueprint.properties.filter(property => property.direction === "in");
+function buildRowDataMap(definition) {
+	const rows = definition.rows;
+	const rowsMap = {};
+	rows.forEach((row) => {
+		rowsMap[row.name] = row.data || {};
+	});
+	return rowsMap;
+}
+
+function buildDefaultInValuesMap(definition) {
+	const properties = definition.properties.filter(property => property.direction === "in");
 	const valuesMap = {};
 	properties.forEach((property) => {
 		valuesMap[property.identifier] = "default" in property.constraints ? property.constraints.default : null;
@@ -18,32 +61,13 @@ export function getDefaultInValuesMap(blueprint) {
 	return valuesMap;
 }
 
-export function getNullOutValuesMap(blueprint) {
-	const properties = blueprint.properties.filter(property => property.direction === "out");
+function buildNullOutValuesMap(definition) {
+	const properties = definition.properties.filter(property => property.direction === "out");
 	const valuesMap = {};
 	properties.forEach((property) => {
 		valuesMap[property.identifier] = null;
 	});
 	return valuesMap;
-}
-
-export function constructNode(blueprint, xDestination, yDestination, startSelected) {
-	const nodeData = {
-		name: blueprint.name,
-		blueprint: blueprint,
-		element: null,
-		inConnections: getEmptyConnectionsMap(blueprint, "in"),
-		outConnections: getEmptyConnectionsMap(blueprint, "out"),
-		inValues: getDefaultInValuesMap(blueprint),
-		outValues: getNullOutValuesMap(blueprint),
-		selected: null,
-		x: xDestination,
-		y: yDestination,
-	};
-	nodeData.element = createNodeElement(nodeData);
-	if (startSelected) createNodeOutlineElement(nodeData);
-
-	return nodeData;
 }
 
 export function createNodeOutlineElement(nodeData) {
@@ -53,17 +77,17 @@ export function createNodeOutlineElement(nodeData) {
 	return div;
 }
 
-export function createNodeElement(nodeData) {
+function createNodeElement(nodeData, definition) {
 	// Create the node container element
 	const nodeElement = document.createElement("section");
 
 	// Give it a title element
 	const titleElement = document.createElement("h1");
-	titleElement.innerHTML = nodeData.blueprint.name;
+	titleElement.innerHTML = definition.name;
 	nodeElement.appendChild(titleElement);
 
 	// Give it all the specified rows
-	nodeData.blueprint.rows.forEach((row) => appendRow(row, nodeData, nodeElement));
+	definition.rows.forEach((row) => appendRow(row, nodeData, nodeElement));
 	
 	// Append the node element to the DOM
 	document.body.appendChild(nodeElement);
@@ -73,12 +97,12 @@ export function createNodeElement(nodeData) {
 function appendRow(row, nodeData, nodeElement) {
 	// Create property row
 	const rowElement = document.createElement("div");
-	rowElement.classList.add("row", row.display);
+	rowElement.classList.add("row", row.type);
 
 	// Add in connectors
 	appendConnectors(row, rowElement, "in");
 
-	switch (row.display) {
+	switch (row.type) {
 		case "thumbnail": {
 			const canvasElement = document.createElement("canvas");
 			rowElement.appendChild(canvasElement);
@@ -91,13 +115,13 @@ function appendRow(row, nodeData, nodeElement) {
 			const labelElement = document.createElement("label");
 			labelElement.innerHTML = row.options.label;
 
-			if (row.display === "input") {
+			if (row.type === "input") {
 				const inputElement = document.createElement("input");
 				inputElement.value = getRowCurrentValue(row, nodeData);
 				labelElement.appendChild(inputElement);
 			}
 
-			if (row.display === "dropdown") {
+			if (row.type === "dropdown") {
 				labelElement.innerHTML = "";
 				const dropdownElement = document.createElement("select");
 
@@ -114,6 +138,7 @@ function appendRow(row, nodeData, nodeElement) {
 			rowElement.appendChild(labelElement);
 			break;
 		}
+		default: console.log(`Trying to append a row of type ${row.type} which is not supported.`);
 	}
 
 	// Add out connectors
@@ -144,7 +169,23 @@ function appendConnectors(row, rowElement, direction) {
 	if (connectorsList.length >= 1) rowElement.classList.add(direction);
 }
 
+// TODO: Replace this with the function after this one
 function getRowCurrentValue(row, nodeData) {
 	const boundProperty = row.options.inputBoundIdentifier;
 	return nodeData.inValues[boundProperty];
+}
+
+function getInPropertyValue(nodeData, identifier) {
+	// Return the out value from the property's connected source node, if connected
+	const connection = nodeData.inConnections[identifier][0];
+	if (connection) return getOutPropertyValue(connection.node, identifier);
+
+	// Otherwise, return the value from this node's widget bound to the property
+	const definition = nodes[nodeData.name].getDefinition();
+	const rowType = definition.rows.find(row => row.options.outputBoundIdentifier === identifier).type;
+	return widgets[rowType].getPropertyValue(nodeData, identifier, definition);
+}
+
+function computeProperties(nodeData, definition) {
+
 }
