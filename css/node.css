@@ -50,8 +50,8 @@ section h1 {
 	border-radius: 10px 10px 0 0;
 }
 
-section .row.thumbnail {
-	margin-bottom: 8px;
+section .row .spacer {
+	height: 8px;
 }
 
 section .row.in label {
@@ -67,6 +67,23 @@ section label {
 	position: relative;
 	z-index: 10;
 	pointer-events: none;
+}
+
+section select {
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+}
+
+section input[type="number"]::-webkit-outer-spin-button,
+section input[type="number"]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+section input[type="number"] {
+	-moz-appearance: textfield;
 }
 
 section label input,

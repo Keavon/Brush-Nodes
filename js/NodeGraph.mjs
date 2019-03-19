@@ -31,7 +31,6 @@ export default function initGraph() {
 	connectWire(blend1, "composite", blend2, "background");
 
 	updateGraphView();
-
 	setupEvents();
 }
 
@@ -200,12 +199,12 @@ function graphMouseupHandler(event) {
 		dragInitiationTarget = undefined;
 
 		// Replace current selection if the selected group was not moved when clicking on a selected node
-		if (target.closest("section") && !target.closest("input")) {
+		if (target.closest("section") && !target.closest("label")) {
 			const nodeElement = target.closest("section");
 			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
 
 			if (nodeData.selected && !event.shiftKey && !event.ctrlKey && !selectionWasDragged) {
-				deselectAllNodes();
+				deselectAllNodesExcept([nodeData]);
 				selectNode(nodeData, true);
 			}
 		}
@@ -309,6 +308,12 @@ function deselectAllNodes() {
 	nodeDatabase.forEach((nodeData) => {
 		deselectNode(nodeData);
 	});
+}
+
+function deselectAllNodesExcept(nodesArray) {
+	nodeDatabase.forEach((nodeData => {
+		if (!nodesArray.includes(nodeData)) deselectNode(nodeData);
+	}));
 }
 
 function selectNode(nodeData, bringToFront) {
@@ -462,6 +467,7 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 	// Connect the wire to the input
 	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
 	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
+	Node.recomputeProperties(inNodeData, true);
 
 	// Find the connector dot DOM elements
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
@@ -475,6 +481,10 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 	const wire = createWirePath(outConnector, inConnector);
 	outConnection.wire = wire;
 	inConnection.wire = wire;
+
+	// TODO: Implement a cycle detector that doesn't require the connection be already made, which would allow this code to moved to the top, thus preventing this from disconnecting any existing wire
+	// Prevent connecting nodes in a cycle
+	if (Node.findChildNodeDepths(inNodeData) === null) disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier);
 }
 
 function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {

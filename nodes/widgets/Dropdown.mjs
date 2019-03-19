@@ -5,24 +5,22 @@ export function getPropertyValue(nodeData, identifier, definition) {
 	return nodeData.rowData[row.name];
 }
 
-export function createWidget(nodeData, row, definition) {
-	let value = nodeData.rowData[row.name].inputValue;
-	if (value === undefined) {
-		const property = definition.properties.find(property => property.identifier === row.options.inputBoundIdentifier);
-		value = property.default;
-		nodeData.rowData[row.name].inputValue = value;
-	}
-
+export function createWidget(nodeData, row) {
 	const labelElement = document.createElement("label");
-	labelElement.innerHTML = row.options.label;
-
-	const inputElement = document.createElement("input");
-	inputElement.type = "number";
-	inputElement.value = value;
-	inputElement.addEventListener("input", event => inputChangeHandler(event, nodeData, row, false));
-	inputElement.addEventListener("change", event => inputChangeHandler(event, nodeData, row, true));
 	
-	labelElement.appendChild(inputElement);
+	const dropdownElement = document.createElement("select");
+	dropdownElement.title = row.options.label;
+	dropdownElement.addEventListener("input", event => inputChangeHandler(event, nodeData, row, false));
+	dropdownElement.addEventListener("change", event => inputChangeHandler(event, nodeData, row, true));
+
+	nodeData.rowData[row.name].options.forEach((optionText) => {
+		const optionElement = document.createElement("option");
+		if (optionText === "placeholder");
+		optionElement.innerHTML = optionText;
+		dropdownElement.appendChild(optionElement);
+	});
+
+	labelElement.appendChild(dropdownElement);
 	return labelElement;
 }
 
@@ -33,7 +31,7 @@ export function resetRowDataToPropertyValue(nodeData, rowData, rowDefinition) {
 }
 
 function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
-	const newValue = validate(event.target.value);
+	const newValue = event.target.value;
 	
 	// Update the row's widget state data
 	const savedRowData = nodeData.rowData[row.name];
@@ -44,8 +42,4 @@ function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
 	Node.setPropertyValue(nodeData, propertyIdentifier, newValue)
 
 	Node.recomputeProperties(nodeData, recomputeGraphDownstream);
-}
-
-function validate(value) {
-	return Number(value);
 }

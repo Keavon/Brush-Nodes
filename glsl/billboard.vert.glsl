@@ -1,10 +1,11 @@
 #version 300 es
 
-in vec4 a_position;
+in vec4 a_vertexCoordinates;
+in vec2 a_uvCoordinates;
 
-out vec2 v_texCoord;
+out vec2 v_uvCoordinates;
 
 void main() {
-	v_texCoord = vec2(a_position.x + 1.0, a_position.y + 1.0) * 0.5;
-	gl_Position = vec4(a_position.x, -a_position.y, 0, 1);
+	v_uvCoordinates = a_uvCoordinates;
+	gl_Position = vec4(a_vertexCoordinates.x, -a_vertexCoordinates.y, 0, 1);
 }

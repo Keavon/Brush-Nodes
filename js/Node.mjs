@@ -1,5 +1,3 @@
-import { renderThumbnail } from "./Rendering.mjs";
-
 import * as Node_PerlinNoise from "../nodes/PerlinNoise.mjs";
 import * as Node_Blend from "../nodes/Blend.mjs";
 const nodes = {
@@ -7,9 +5,17 @@ const nodes = {
 	"Blend": Node_Blend,
 };
 
+import * as Widget_Spacer from "../nodes/widgets/Spacer.mjs";
+import * as Widget_Thumbnail from "../nodes/widgets/Thumbnail.mjs";
+import * as Widget_Label from "../nodes/widgets/Label.mjs";
 import * as Widget_Input from "../nodes/widgets/Input.mjs";
+import * as Widget_Dropdown from "../nodes/widgets/Dropdown.mjs";
 const widgets = {
-	"input": Widget_Input,
+	"Spacer": Widget_Spacer,
+	"Thumbnail": Widget_Thumbnail,
+	"Label": Widget_Label,
+	"Input": Widget_Input,
+	"Dropdown": Widget_Dropdown,
 };
 
 export function createNode(node, xPlacement, yPlacement, startSelected) {
@@ -20,16 +26,15 @@ export function createNode(node, xPlacement, yPlacement, startSelected) {
 		selected: null,
 		inConnections: buildEmptyConnectionsMap(definition, "in"),
 		outConnections: buildEmptyConnectionsMap(definition, "out"),
-		rowStateData: buildRowDataMap(definition),
-		propertyValues: undefined,
+		rowData: buildRowDataMap(definition),
+		propertyValues: buildDefaultPropertyValuesMap(definition),
 		x: xPlacement,
 		y: yPlacement,
-		inValues: buildDefaultInValuesMap(definition),
-		outValues: buildNullOutValuesMap(definition),
 	};
 	nodeData.element = createNodeElement(nodeData, definition);
 	if (startSelected) createNodeOutlineElement(nodeData);
-	nodeData.propertyValues = computeProperties(nodeData, definition);
+	updateRowDataToPropertyValues(nodeData, definition);
+	recomputeProperties(nodeData, false);
 
 	return nodeData;
 }
@@ -44,30 +49,32 @@ function buildEmptyConnectionsMap(definition, direction) {
 }
 
 function buildRowDataMap(definition) {
-	const rows = definition.rows;
 	const rowsMap = {};
-	rows.forEach((row) => {
-		rowsMap[row.name] = row.data || {};
+	definition.rows.forEach((row) => {
+		if (row.name !== undefined) rowsMap[row.name] = row.data || {};
 	});
 	return rowsMap;
 }
 
-function buildDefaultInValuesMap(definition) {
-	const properties = definition.properties.filter(property => property.direction === "in");
-	const valuesMap = {};
-	properties.forEach((property) => {
-		valuesMap[property.identifier] = "default" in property.constraints ? property.constraints.default : null;
+function buildDefaultPropertyValuesMap(definition) {
+	const propertiesMap = {};
+	definition.properties.forEach((property) => {
+		propertiesMap[property.identifier] = property.default;
 	});
-	return valuesMap;
+	return propertiesMap;
 }
 
-function buildNullOutValuesMap(definition) {
-	const properties = definition.properties.filter(property => property.direction === "out");
-	const valuesMap = {};
-	properties.forEach((property) => {
-		valuesMap[property.identifier] = null;
+function updateRowDataToPropertyValues(nodeData, definition) {
+	Object.keys(nodeData.rowData).forEach((rowName) => {
+		const rowData = nodeData.rowData[rowName];
+		const rowDefinition = definition.rows.find(r => r.name === rowName);
+
+		if (!rowDefinition) return;
+		const widget = widgets[rowDefinition.type];
+
+		if (!widget.resetRowDataToPropertyValue) return;
+		widget.resetRowDataToPropertyValue(nodeData, rowData, rowDefinition);
 	});
-	return valuesMap;
 }
 
 export function createNodeOutlineElement(nodeData) {
@@ -87,68 +94,34 @@ function createNodeElement(nodeData, definition) {
 	nodeElement.appendChild(titleElement);
 
 	// Give it all the specified rows
-	definition.rows.forEach((row) => appendRow(row, nodeData, nodeElement));
+	definition.rows.forEach((row) => nodeElement.appendChild(createRow(row, nodeData, definition)));
 	
 	// Append the node element to the DOM
 	document.body.appendChild(nodeElement);
 	return nodeElement;
 }
 
-function appendRow(row, nodeData, nodeElement) {
+function createRow(row, nodeData, definition) {
 	// Create property row
 	const rowElement = document.createElement("div");
-	rowElement.classList.add("row", row.type);
+	rowElement.classList.add("row");
 
-	// Add in connectors
+	// Add any in connectors
 	appendConnectors(row, rowElement, "in");
 
-	switch (row.type) {
-		case "thumbnail": {
-			const canvasElement = document.createElement("canvas");
-			rowElement.appendChild(canvasElement);
-			renderThumbnail(canvasElement);
-			break;
-		}
-		case "label":
-		case "input":
-		case "dropdown": {
-			const labelElement = document.createElement("label");
-			labelElement.innerHTML = row.options.label;
+	// Add the row's widget
+	const widgetElement = widgets[row.type].createWidget(nodeData, row, definition);
+	rowElement.appendChild(widgetElement);
 
-			if (row.type === "input") {
-				const inputElement = document.createElement("input");
-				inputElement.value = getRowCurrentValue(row, nodeData);
-				labelElement.appendChild(inputElement);
-			}
-
-			if (row.type === "dropdown") {
-				labelElement.innerHTML = "";
-				const dropdownElement = document.createElement("select");
-
-				["Normal", "Multiply", "Screen", "Overlay"].forEach((optionText) => {
-					const optionElement = document.createElement("option");
-					if (optionText === getRowCurrentValue(row, nodeData)) optionElement.setAttributeNode(document.createAttribute("selected"));
-					optionElement.innerHTML = optionText;
-					dropdownElement.appendChild(optionElement);
-				});
-
-				labelElement.appendChild(dropdownElement);
-			}
-	
-			rowElement.appendChild(labelElement);
-			break;
-		}
-		default: console.log(`Trying to append a row of type ${row.type} which is not supported.`);
-	}
-
-	// Add out connectors
+	// Add any out connectors
 	appendConnectors(row, rowElement, "out");
 
-	// Add property row to node
-	nodeElement.appendChild(rowElement);
+	return rowElement;
 }
 
 function appendConnectors(row, rowElement, direction) {
+	if (!row.connectors) return;
+
 	const connectorsList = row.connectors.filter(c => c.direction === direction);
 
 	connectorsList.forEach((connector, index) => {
@@ -169,23 +142,95 @@ function appendConnectors(row, rowElement, direction) {
 	if (connectorsList.length >= 1) rowElement.classList.add(direction);
 }
 
-// TODO: Replace this with the function after this one
-function getRowCurrentValue(row, nodeData) {
-	const boundProperty = row.options.inputBoundIdentifier;
-	return nodeData.inValues[boundProperty];
-}
-
-function getInPropertyValue(nodeData, identifier) {
+export function getInPropertyValue(nodeData, identifier) {
 	// Return the out value from the property's connected source node, if connected
 	const connection = nodeData.inConnections[identifier][0];
-	if (connection) return getOutPropertyValue(connection.node, identifier);
+	if (connection) return getOutPropertyValue(connection.node, connection.identifier);
 
-	// Otherwise, return the value from this node's widget bound to the property
-	const definition = nodes[nodeData.name].getDefinition();
-	const rowType = definition.rows.find(row => row.options.outputBoundIdentifier === identifier).type;
-	return widgets[rowType].getPropertyValue(nodeData, identifier, definition);
+	// Otherwise, return the value from this node's property that has been updated by the associated widget
+	return nodeData.propertyValues[identifier];
 }
 
-function computeProperties(nodeData, definition) {
+export function getOutPropertyValue(nodeData, identifier) {
+	return nodeData.propertyValues[identifier];
+}
 
+export function setPropertyValue(nodeData, identifier, value) {
+	nodeData.propertyValues[identifier] = value;
+
+	// Find if there is a widget which is defined as being bound to this output
+	const rows = nodes[nodeData.name].getDefinition().rows;
+	const outputBoundRow = rows.find(row => row.options && row.options.outputBoundIdentifier === identifier);
+	if (!outputBoundRow) return;
+
+	const widgetToNotify = widgets[outputBoundRow.type];
+	if (!widgetToNotify) return;
+
+	if (!widgetToNotify.propertyValueWasUpdated) return;	
+	widgetToNotify.propertyValueWasUpdated(nodeData, outputBoundRow)
+}
+
+export function recomputeProperties(nodeData, recomputeGraphDownstream) {
+	if (recomputeGraphDownstream) {
+		const depthGroups = findChildNodeDepths(nodeData);
+		depthGroups.forEach((depthGroup) => {
+			depthGroup.forEach((node) => {
+				recomputeProperties(node, false);
+			});
+		});
+
+		return;
+	}
+
+	if (nodes[nodeData.name].compute) nodes[nodeData.name].compute(nodeData);
+	else console.error(`${nodeData.name} node has no compute() function implementation.`);
+}
+
+export function findChildNodeDepths(nodeData, outConnectorsToTraverse) {
+	// const allVisitedNodes = [];
+	const nodeDepths = new Map();
+	nodeDepths.set(nodeData, 0);
+	const nodesToVisit = [nodeData];
+	let maxDepth = 0;
+
+	// Object.keys(outConnectorsToTraverse).forEach((outConnectorIdentifier) => {
+	// 	const connector = outConnectorsToTraverse[outConnectorIdentifier];
+	// 	const connectionDestinationNodes = connector.map(connection => connection.node);
+	// 	connectionDestinationNodes.forEach((node) => {
+	// 		nodeGroupsAtDepths[1].push(node);
+	// 		nodeDepths.set(node, 1);
+	// 		if (!nodesToVisit.includes(node)) nodesToVisit.push(node);
+	// 	});
+	// });
+
+	while (nodesToVisit.length > 0) {
+		const currentNode = nodesToVisit.pop();
+		const currentNodeDepth = nodeDepths.get(currentNode);
+
+		// Cycle detection
+		// if (allVisitedNodes.includes(currentNode)) return null;
+		// allVisitedNodes.push(currentNode);
+		// const potentialCycle = nodeDepths.get(currentNode);
+		// if (potentialCycle !== undefined && potentialCycle) return null;
+
+		Object.keys(currentNode.outConnections).forEach((outConnectorIdentifier) => {
+			const connector = currentNode.outConnections[outConnectorIdentifier];
+			const connectionDestinationNodes = connector.map(connection => connection.node);
+			connectionDestinationNodes.forEach((node) => {
+				const existingDepth = nodeDepths.get(node) || 0;
+				const depth = Math.max(existingDepth, currentNodeDepth + 1);
+				maxDepth = Math.max(maxDepth, depth);
+				nodeDepths.set(node, depth);
+				// if (!nodesToVisit.includes(node)) // Untested potential optimization
+				nodesToVisit.push(node);
+			});
+		});
+	}
+
+	const nodeGroupsAtDepths = Array(maxDepth + 1).fill(null).map(() => []);
+	nodeDepths.forEach((depth, node) => {
+		nodeGroupsAtDepths[depth].push(node);
+	});
+
+	return nodeGroupsAtDepths;
 }
