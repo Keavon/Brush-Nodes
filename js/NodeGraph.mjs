@@ -1,4 +1,5 @@
-import * as Node from "./Node.mjs";
+import * as Node from "/Materialism/js/Node.mjs";
+import Demo from "/Materialism/js/Demo.mjs";
 
 const nodeDatabase = [];
 
@@ -17,30 +18,26 @@ let graphOffsetY = 0;
 let graphScale = 1;
 const scaleSpeed = 0.1;
 
-export default function initGraph() {
-	const perlin1 = Node.createNode("Perlin Noise", 50, 50, false);
-	const perlin2 = Node.createNode("Perlin Noise", 50, 500, false);
-	const perlin3 = Node.createNode("Perlin Noise", 1000, 100, false);
-	const blend1 = Node.createNode("Blend", 600, 350, false);
-	const blend2 = Node.createNode("Blend", 1400, 400, false);
-	nodeDatabase.push(perlin1, perlin2, perlin3, blend1, blend2);
-	
-	connectWire(perlin1, "pattern", blend1, "foreground");
-	connectWire(perlin2, "pattern", blend1, "background");
-	connectWire(perlin3, "pattern", blend2, "foreground");
-	connectWire(blend1, "composite", blend2, "background");
-
-	updateGraphView();
+export default async function NodeGraph() {
 	setupEvents();
+
+	const demoHappened = await Demo();
+	if (!demoHappened) {
+		const perlin = await addNode("Perlin Noise", 50, 50);
+		const output = await addNode("Output", 400, 50);
+		connectWire(perlin, "pattern", output, "diffuse");
+	}
 }
 
 function setupEvents() {
-	document.body.addEventListener("mousedown", graphMousedownHandler);
-	document.body.addEventListener("mousemove", graphMousemoveHandler);
-	document.body.addEventListener("mouseup", graphMouseupHandler);
-	document.body.addEventListener("click", graphClickHandler);
-	document.body.addEventListener("wheel", graphWheelHandler);
-	document.body.addEventListener("keydown", graphKeydownHandler);
+	// const nodeGraph = document.querySelector(".node-graph");
+	const nodeGraph = document.body;
+	nodeGraph.addEventListener("mousedown", graphMousedownHandler);
+	nodeGraph.addEventListener("mousemove", graphMousemoveHandler);
+	nodeGraph.addEventListener("mouseup", graphMouseupHandler);
+	nodeGraph.addEventListener("click", graphClickHandler);
+	nodeGraph.addEventListener("wheel", graphWheelHandler);
+	nodeGraph.addEventListener("keydown", graphKeydownHandler);
 }
 
 function graphMousedownHandler(event) {
@@ -178,8 +175,8 @@ function graphMousemoveHandler(event) {
 	if (cursorWireConnection) {
 		const attachedConnectorElement = cursorWireConnection.node.element.querySelector(`.connector[data-identifier="${cursorWireConnection.identifier}"]`);
 		
-		if (cursorWireDirectionOnNodeSide === "out") updateWire(cursorWireConnection.wire, attachedConnectorElement, mousePosition);
-		else if (cursorWireDirectionOnNodeSide === "in") updateWire(cursorWireConnection.wire, mousePosition, attachedConnectorElement);
+		if (cursorWireDirectionOnNodeSide === "out") updateWirePath(cursorWireConnection.wire, attachedConnectorElement, mousePosition);
+		else if (cursorWireDirectionOnNodeSide === "in") updateWirePath(cursorWireConnection.wire, mousePosition, attachedConnectorElement);
 
 		// Prevent mouse drag from highlighting text
 		event.preventDefault();
@@ -281,9 +278,94 @@ function graphKeydownHandler(event) {
 		return;
 	}
 
+	if (event.key.toLowerCase() === "p") {
+		addNode("Perlin Noise");
+	}
+
+	if (event.key.toLowerCase() === "b") {
+		addNode("Blend");
+	}
+
+	if (event.key.toLowerCase() === "c") {
+		addNode("Color");
+	}
+
 	if (event.key.toLowerCase() === "enter" && document.activeElement.closest("input")) {
 		document.activeElement.closest("input").blur();
 	}
+
+	if (event.key.toLowerCase() === "backspace" || event.key.toLowerCase() === "delete") {
+		removeSelectedNodes();
+	}
+}
+
+export function addNode(nodeName, x = 100, y = 100, startSelected = false) {
+	return Node
+	.createNode(nodeName, x, y, startSelected)
+	.then((nodeData) => {
+		document.querySelector(".node-graph").appendChild(nodeData.element);
+		nodeDatabase.push(nodeData);
+		updateNodePosition(nodeData);
+		return nodeData;
+	});
+}
+
+export function removeNode(nodeData) {
+	// Disallow removing the single output node
+	if (nodeData.name === "Output") return;
+
+	// Keep a list of every in and out connection to remove at the end
+	const inConnectionsToRemove = [];
+	const outConnectionsToRemove = [];
+
+	// Find all wires connected as inputs to remove
+	Object.keys(nodeData.inConnections).forEach((connectorName) => {
+		const connector = nodeData.inConnections[connectorName];
+		connector.forEach((connection) => {
+			const outNodeConnectors = connection.node.outConnections;
+			Object.keys(outNodeConnectors).forEach((outConnectorName) => {
+				const outConnector = outNodeConnectors[outConnectorName];
+				outConnector.forEach((outConnection) => {
+					if (outConnection.identifier === connectorName && outConnection.node === nodeData) {
+						inConnectionsToRemove.push([connection.node, outConnectorName, nodeData, connectorName]);
+					}
+				});
+			});
+		});
+	});
+	
+	// Find all wires connected as outputs to remove
+	Object.keys(nodeData.outConnections).forEach((connectorName) => {
+		const connector = nodeData.outConnections[connectorName];
+		connector.forEach((connection) => {
+			const inNodeConnectors = connection.node.inConnections;
+			Object.keys(inNodeConnectors).forEach((inConnectorName) => {
+				const inConnector = inNodeConnectors[inConnectorName];
+				inConnector.forEach((inConnection) => {
+					if (inConnection.identifier === connectorName && inConnection.node === nodeData) {
+						outConnectionsToRemove.push([nodeData, connectorName, connection.node, inConnectorName]);
+					}
+				});
+			});
+		});
+	});
+
+	// Now remove those found connections once the looping is over
+	inConnectionsToRemove.forEach((toRemove) => disconnectWire(...toRemove));
+	outConnectionsToRemove.forEach((toRemove) => disconnectWire(...toRemove));
+
+	// Deselect the node to remove the selection outline element
+	deselectNode(nodeData);
+
+	// Remove the node from the DOM
+	nodeData.element.parentElement.removeChild(nodeData.element);
+
+	// Remove the node from the node database
+	nodeDatabase.splice(nodeDatabase.indexOf(nodeData), 1);
+}
+
+function removeSelectedNodes() {
+	nodeDatabase.filter(node => node.selected).forEach(nodeData => removeNode(nodeData));
 }
 
 function moveSelectedNodes(deltaMove) {
@@ -374,7 +456,7 @@ function updateNodePosition(nodeData) {
 			const inConnectorElement = connection.node.element;
 			const inConnector = inConnectorElement.querySelector(`.connector[data-identifier="${connection.identifier}"]`);
 
-			updateWire(path, outConnector, inConnector);
+			updateWirePath(path, outConnector, inConnector);
 		});
 	});
 
@@ -391,12 +473,12 @@ function updateNodePosition(nodeData) {
 			const outConnectorElement = connection.node.element;
 			const outConnector = outConnectorElement.querySelector(`.connector[data-identifier="${connection.identifier}"]`);
 
-			updateWire(path, outConnector, inConnector);
+			updateWirePath(path, outConnector, inConnector);
 		});
 	});
 }
 
-function updateWire(path, outConnector, inConnector) {
+function updateWirePath(path, outConnector, inConnector) {
 	let outConnectorX;
 	let outConnectorY;
 
@@ -434,16 +516,16 @@ function updateWire(path, outConnector, inConnector) {
 
 function createWirePath(outConnector, inConnector) {
 	const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-	updateWire(path, outConnector, inConnector);
+	updateWirePath(path, outConnector, inConnector);
 	document.querySelector("svg.wires").appendChild(path);
 	return path;
 }
 
 function destroyWirePath(path) {
-	document.querySelector("svg.wires").removeChild(path);
+	path.parentElement.removeChild(path);
 }
 
-function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
 	// Prevent connecting nodes as input->input or output->output
 	if (!(outNodeIdentifier in outNodeData.outConnections && inNodeIdentifier in inNodeData.inConnections)) return;
 
@@ -467,13 +549,16 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 	// Connect the wire to the input
 	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
 	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
-	Node.recomputeProperties(inNodeData, true);
+	
+	// Notify widgets on this node bound to the identifier so they can update
+	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
+	
+	// Recompute everything downstream
+	Node.recomputeDownstreamNodes(inNodeData);
 
-	// Find the connector dot DOM elements
+	// Find the connector dot DOM elements and increment the connection degrees
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
 	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
-
-	// Increment the connection degrees
 	outConnector.dataset["outdegree"]++;
 	inConnector.dataset["indegree"]++;
 
@@ -484,25 +569,33 @@ function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifie
 
 	// TODO: Implement a cycle detector that doesn't require the connection be already made, which would allow this code to moved to the top, thus preventing this from disconnecting any existing wire
 	// Prevent connecting nodes in a cycle
-	if (Node.findChildNodeDepths(inNodeData) === null) disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier);
+	// if (Node.findChildNodeDepths(inNodeData) === null) disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier);
 }
 
 function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+	const outConnections = outNodeData.outConnections[outNodeIdentifier];
+	const inConnections = inNodeData.inConnections[inNodeIdentifier];
+
 	// Find and destroy the SVG wire path
-	const wirePath = outNodeData.outConnections[outNodeIdentifier].find(connection => connection.node === inNodeData && connection.identifier === inNodeIdentifier).wire;
-	destroyWirePath(wirePath);
+	const connection = outConnections.find(c => c.node === inNodeData && c.identifier === inNodeIdentifier);
 
 	// Filter the out/in connections to not include the in/out identifiers
-	outNodeData.outConnections[outNodeIdentifier] = outNodeData.outConnections[outNodeIdentifier].filter(connection => connection.identifier !== inNodeIdentifier);
-	inNodeData.inConnections[inNodeIdentifier] = inNodeData.inConnections[inNodeIdentifier].filter(connection => connection.identifier !== outNodeIdentifier);
+	outConnections.splice(outConnections.indexOf(connection), 1);
+	inConnections.splice(inConnections.indexOf(connection), 1);
 
-	// Find the connector dot DOM elements
+	// Find the connector dot DOM elements and decrement the connection degrees
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
 	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
-
-	// Decrement the connection degrees
 	outConnector.dataset["outdegree"]--;
 	inConnector.dataset["indegree"]--;
+	
+	destroyWirePath(connection.wire);
+	
+	// Notify widgets on this node bound to the identifier so they can update
+	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
+
+	// Recompute everything downstream
+	Node.recomputeDownstreamNodes(inNodeData);
 }
 
 function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {

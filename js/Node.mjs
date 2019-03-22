@@ -1,25 +1,35 @@
-import * as Node_PerlinNoise from "../nodes/PerlinNoise.mjs";
-import * as Node_Blend from "../nodes/Blend.mjs";
+import * as Node_PerlinNoise from "/Materialism/nodes/PerlinNoise.mjs";
+import * as Node_Blend from "/Materialism/nodes/Blend.mjs";
+import * as Node_Color from "/Materialism/nodes/Color.mjs";
+import * as Node_Output from "/Materialism/nodes/Output.mjs";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
 	"Blend": Node_Blend,
+	"Color": Node_Color,
+	"Output": Node_Output,
 };
 
-import * as Widget_Spacer from "../nodes/widgets/Spacer.mjs";
-import * as Widget_Thumbnail from "../nodes/widgets/Thumbnail.mjs";
-import * as Widget_Label from "../nodes/widgets/Label.mjs";
-import * as Widget_Input from "../nodes/widgets/Input.mjs";
-import * as Widget_Dropdown from "../nodes/widgets/Dropdown.mjs";
+import * as Widget_Spacer from "/Materialism/nodes/widgets/Spacer.mjs";
+import * as Widget_Thumbnail from "/Materialism/nodes/widgets/Thumbnail.mjs";
+import * as Widget_Label from "/Materialism/nodes/widgets/Label.mjs";
+import * as Widget_Input from "/Materialism/nodes/widgets/Input.mjs";
+import * as Widget_Dropdown from "/Materialism/nodes/widgets/Dropdown.mjs";
+import * as Widget_Output from "/Materialism/nodes/widgets/Output.mjs";
 const widgets = {
 	"Spacer": Widget_Spacer,
 	"Thumbnail": Widget_Thumbnail,
 	"Label": Widget_Label,
 	"Input": Widget_Input,
 	"Dropdown": Widget_Dropdown,
+	"Output": Widget_Output,
 };
 
-export function createNode(node, xPlacement, yPlacement, startSelected) {
-	const definition = nodes[node].getDefinition();
+export async function createNode(nodeName, xPlacement, yPlacement, startSelected) {
+	// Get the definition object for the chosen node type
+	const node = nodes[nodeName];
+	const definition = node.getDefinition();
+
+	// Define the object that holds all the state for the node
 	const nodeData = {
 		name: definition.name,
 		element: undefined,
@@ -31,10 +41,17 @@ export function createNode(node, xPlacement, yPlacement, startSelected) {
 		x: xPlacement,
 		y: yPlacement,
 	};
+
+	// Fill in the other fields that require the object
 	nodeData.element = createNodeElement(nodeData, definition);
 	if (startSelected) createNodeOutlineElement(nodeData);
 	updateRowDataToPropertyValues(nodeData, definition);
-	recomputeProperties(nodeData, false);
+
+	// Set up the shader if the node has one
+	if (node.setup) await node.setup();
+
+	// Compute all the output values from the inputs
+	recomputeProperties(nodeData);
 
 	return nodeData;
 }
@@ -97,7 +114,6 @@ function createNodeElement(nodeData, definition) {
 	definition.rows.forEach((row) => nodeElement.appendChild(createRow(row, nodeData, definition)));
 	
 	// Append the node element to the DOM
-	document.body.appendChild(nodeElement);
 	return nodeElement;
 }
 
@@ -105,6 +121,7 @@ function createRow(row, nodeData, definition) {
 	// Create property row
 	const rowElement = document.createElement("div");
 	rowElement.classList.add("row");
+	rowElement.dataset["name"] = row.name;
 
 	// Add any in connectors
 	appendConnectors(row, rowElement, "in");
@@ -158,32 +175,55 @@ export function getOutPropertyValue(nodeData, identifier) {
 export function setPropertyValue(nodeData, identifier, value) {
 	nodeData.propertyValues[identifier] = value;
 
-	// Find if there is a widget which is defined as being bound to this output
+	notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier);
+}
+
+export function setFinalPropertyValueAndPropagate(nodeData, identifier, value) {
+	const rows = nodes[nodeData.name].getDefinition().rows;
+	const row = rows.find(row => row.options && row.options.inputBoundIdentifier === identifier);
+
+	// Update the row's widget state data
+	const savedRowData = nodeData.rowData[row.name];
+	savedRowData.inputValue = value;
+	if (widgets[row.type].updateElementDisplayValue) widgets[row.type].updateElementDisplayValue(nodeData, row);
+	
+	// Set the new value and update the node with any bound widgets
+	setPropertyValue(nodeData, identifier, value)
+
+	// Recompute this node with the new input
+	recomputeProperties(nodeData);
+	
+	// Recompute the whole downstream graph
+	recomputeDownstreamNodes(nodeData);
+}
+
+export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 	const rows = nodes[nodeData.name].getDefinition().rows;
 	const outputBoundRow = rows.find(row => row.options && row.options.outputBoundIdentifier === identifier);
 	if (!outputBoundRow) return;
-
+	
 	const widgetToNotify = widgets[outputBoundRow.type];
-	if (!widgetToNotify) return;
-
-	if (!widgetToNotify.propertyValueWasUpdated) return;	
-	widgetToNotify.propertyValueWasUpdated(nodeData, outputBoundRow)
+	if (widgetToNotify && widgetToNotify.propertyValueWasUpdated) {
+		widgetToNotify.propertyValueWasUpdated(nodeData, outputBoundRow);
+	}
 }
 
-export function recomputeProperties(nodeData, recomputeGraphDownstream) {
-	if (recomputeGraphDownstream) {
-		const depthGroups = findChildNodeDepths(nodeData);
-		depthGroups.forEach((depthGroup) => {
-			depthGroup.forEach((node) => {
-				recomputeProperties(node, false);
-			});
-		});
-
-		return;
+export function recomputeProperties(nodeData) {
+	if (nodes[nodeData.name].compute) {
+		nodes[nodeData.name].compute(nodeData);
 	}
+	else {
+		console.error(`${nodeData.name} node has no compute() function implementation.`);
+	}
+}
 
-	if (nodes[nodeData.name].compute) nodes[nodeData.name].compute(nodeData);
-	else console.error(`${nodeData.name} node has no compute() function implementation.`);
+export function recomputeDownstreamNodes(nodeData) {
+	const depthGroups = findChildNodeDepths(nodeData);
+	depthGroups.forEach((depthGroup) => {
+		depthGroup.forEach((node) => {
+			recomputeProperties(node);
+		});
+	});
 }
 
 export function findChildNodeDepths(nodeData, outConnectorsToTraverse) {

@@ -1,24 +1,14 @@
+const placeholderImage = {
+	pixelData: new Uint8Array([0, 0, 0, 255]),
+	resolution: [1, 1],
+};
+
 export function createGLContext(canvas = document.createElement("canvas")) {
 	const gl = canvas.getContext("webgl2");
 	return gl;
 }
 
-export function createProgram(gl, vertexShaderPath, fragmentShaderPath) {
-	const relativePrefix = "../glsl/";
-	const vertexShaderSource = fetch(relativePrefix + vertexShaderPath).then(response => response.text());
-	const fragmentShaderSource = fetch(relativePrefix + fragmentShaderPath).then(response => response.text());
-	
-	return Promise
-		.all([vertexShaderSource, fragmentShaderSource])
-		.then((sources) => {
-			const vertexShader = compileShader(gl, gl.VERTEX_SHADER, sources[0]);
-			const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, sources[1]);
-			const program = linkProgram(gl, vertexShader, fragmentShader);
-			return program;
-		});
-}
-
-export function initializeProgram(gl, program, resolution, uniforms, textures = {}, textureLocations = {}) {
+export function initializeProgram(gl, program, resolution, uniforms, textures = {}) {
 	// Prepare the canvas and shader
 	gl.canvas.width = resolution[0];
 	gl.canvas.height = resolution[1];
@@ -33,7 +23,7 @@ export function initializeProgram(gl, program, resolution, uniforms, textures = 
 		uniforms[uniformName].location = gl.getUniformLocation(program, uniformName);
 	});
 	Object.keys(textures).forEach((uniformName) => {
-		textureLocations[uniformName] = gl.getUniformLocation(program, uniformName);
+		textures[uniformName].location = gl.getUniformLocation(program, uniformName);
 	});
 
 	// Send plane vertex coordinates
@@ -82,11 +72,12 @@ export function readRenderedTexture(gl, framebuffer, resolution) {
 	return { resolution, pixelData };
 }
 
-export function composite(gl, program, resolution, uniforms, textures = {}, textureLocations = {}) {
+export function composite(gl, program, resolution, uniforms, textures = {}) {
 	// Uniforms
 	// gl.uniform2fv(uniformLocations["u_resolution"], resolution);
 	Object.keys(uniforms).forEach((uniformName) => {
 		const uniform = uniforms[uniformName];
+		if (!uniform.location) return;
 
 		if (uniform.type === "float") {
 			if (!uniform.vector) gl.uniform1f(uniform.location, uniform.value);
@@ -104,15 +95,24 @@ export function composite(gl, program, resolution, uniforms, textures = {}, text
 			else if (uniform.value.length === 4) gl.uniform4iv(uniform.location, uniform.value);
 			else console.error("Unknown data type for the uniform being set");
 		}
+		else if (uniform.type === "matrix") {
+			if (Math.sqrt(uniform.value.length) === 2) gl.uniformMatrix2fv(uniform.location, false, uniform.value);
+			else if (Math.sqrt(uniform.value.length) === 3) gl.uniformMatrix3fv(uniform.location, false, uniform.value);
+			else if (Math.sqrt(uniform.value.length) === 4) gl.uniformMatrix4fv(uniform.location, false, uniform.value);
+			else console.error("Unknown data type for the uniform being set");
+		}
+		else if (uniform.type === "bool") {
+			gl.uniform1i(uniform.location, uniform.value ? 1 : 0);
+		}
 		else console.error("Unknown data type for the uniform being set");
 	});
 
 	// Textures
 	Object.keys(textures).forEach((textureName, index) => {
-		if (index >= gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) console.error("The browser does not support this many texture units");
+		if (index >= gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) console.error("Your browser does not support this many texture units");
 		
 		const texture = gl.createTexture();
-		gl.uniform1i(textureLocations[textureName], index);
+		gl.uniform1i(textures[textureName].location, index);
 		gl.activeTexture(gl[`TEXTURE${index}`]);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -121,10 +121,10 @@ export function composite(gl, program, resolution, uniforms, textures = {}, text
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-		const image = textures[textureName];
-		const width = image ? image.resolution[0] : resolution[0];
-		const height = image ? image.resolution[1] : resolution[1];
-		const pixelData = image ? image.pixelData : new Uint8Array(width * height * 4).fill(255);
+		const image = textures[textureName].value || placeholderImage;
+		const width = image.resolution[0];
+		const height = image.resolution[1];
+		const pixelData = image.pixelData;
 
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 	});
@@ -133,45 +133,4 @@ export function composite(gl, program, resolution, uniforms, textures = {}, text
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
-}
-
-/**
- * Takes a shader source file string and returns its compiled result
- * @param {WebGLRenderingContext} gl WebGL rendering context
- * @param {WebGLRenderingContext.VERTEX_SHADER | WebGLRenderingContext.FRAGMENT_SHADER} shaderType gl.VERTEX_SHADER or gl.FRAGMENT_SHADER
- * @param {string} shaderSource Shader GLSL source code
- * @returns {WebGLShader} Compiled shader
- */
-function compileShader(gl, shaderType, shaderSource) {
-	const shader = gl.createShader(shaderType);
-	gl.shaderSource(shader, shaderSource);
-	gl.compileShader(shader);
-	
-	const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-	if (success) return shader;
-
-	const info = gl.getShaderInfoLog(shader);
-	console.error("Could not compile WebGL shader:", info);
-	gl.deleteShader(shader);
-}
-
-/**
- * Creates a shader program by linking the vertex and fragment shaders
- * @param {WebGLRenderingContext} gl WebGL rendering context
- * @param {WebGLShader} vertexShader Vertex shader for program
- * @param {WebGLShader} fragmentShader Fragment shader for program
- * @returns {WebGLProgram} A shader program consisting of the supplied vertex and fragment shaders
- */
-function linkProgram(gl, vertexShader, fragmentShader) {
-	const program = gl.createProgram();
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
-
-	const success = gl.getProgramParameter(program, gl.LINK_STATUS);
-	if (success) return program;
-
-	const info = gl.getProgramInfoLog(program);
-	console.error("Could not compile WebGL program:", info);
-	gl.deleteProgram(program);
 }

@@ -5,4 +5,46 @@ html, body {
 	font-family: 'Yantramanav', sans-serif;
 	background: hsl(0, 0%, 12%);
 	overflow: hidden;
+	font-size: 0;
+}
+
+.node-graph {
+	width: 75%;
+	height: 100%;
+	display: inline-block;
+	overflow: hidden;
+	position: relative;
+	font-size: 12px;
+}
+
+.node-graph .instructions {
+	display: block;
+	position: absolute;
+	top: 10px;
+	left: 0;
+	right: 0;
+	color: white;
+	font-size: 16px;
+	text-align: center;
+}
+
+.viewports {
+	width: 25%;
+	height: 100%;
+	display: inline-block;
+}
+
+.viewports .viewport-3d,
+.viewports .viewport-2d {
+	width: 100%;
+	height: 50%;
+	background: black;
+	position: relative;
+}
+
+.viewports .viewport-3d canvas,
+.viewports .viewport-2d canvas {
+	width: 100%;
+	height: 100%;
+	display: block;
 }

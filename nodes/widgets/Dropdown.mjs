@@ -1,4 +1,4 @@
-import * as Node from "../../js/Node.mjs";
+import * as Node from "/Materialism/js/Node.mjs";
 
 export function getPropertyValue(nodeData, identifier, definition) {
 	const row = definition.rows.find(row => row.options && row.options.inputBoundIdentifier === identifier);
@@ -15,13 +15,17 @@ export function createWidget(nodeData, row) {
 
 	nodeData.rowData[row.name].options.forEach((optionText) => {
 		const optionElement = document.createElement("option");
-		if (optionText === "placeholder");
 		optionElement.innerHTML = optionText;
 		dropdownElement.appendChild(optionElement);
 	});
 
 	labelElement.appendChild(dropdownElement);
 	return labelElement;
+}
+
+export function updateElementDisplayValue(nodeData, row) {
+	const rowElement = nodeData.element.querySelector(`.row[data-name="${row.name}"]`);
+	rowElement.querySelector("select").value = row.data.inputValue;
 }
 
 export function resetRowDataToPropertyValue(nodeData, rowData, rowDefinition) {
@@ -41,5 +45,9 @@ function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
 	const propertyIdentifier = row.options.inputBoundIdentifier;
 	Node.setPropertyValue(nodeData, propertyIdentifier, newValue)
 
-	Node.recomputeProperties(nodeData, recomputeGraphDownstream);
+	// Recompute this node with the new input
+	Node.recomputeProperties(nodeData);
+	
+	// If the user is finished tweaking this input, recompute the whole downstream graph
+	if (recomputeGraphDownstream) Node.recomputeDownstreamNodes(nodeData);
 }

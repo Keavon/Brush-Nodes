@@ -1,5 +1,6 @@
-import * as Node from "../js/Node.mjs";
-import * as NodeShader from "../js/NodeShader.mjs";
+import * as Node from "/Materialism/js/Node.mjs";
+import * as Shader from "/Materialism/js/Shader.mjs";
+import * as NodeShader from "/Materialism/js/NodeShader.mjs";
 
 let program;
 let gl;
@@ -83,23 +84,19 @@ export function getDefinition() {
 	return definition;
 }
 
-export function compute(nodeData) {
+export function setup() {
 	// Create one WebGl context for this node definition
-	if (!gl) {
-		gl = NodeShader.createGLContext();
-	}
+	gl = NodeShader.createGLContext();
 
-	// Ensure shaders are loaded and a linked program is created for this node definition
-	if (program === undefined) {
-		const loadingProgram = NodeShader.createProgram(gl, "Billboard.vert.glsl", "PerlinNoise.frag.glsl");
-		loadingProgram.then((createdProgram) => {
-			program = createdProgram;
-			compute(nodeData);
-		});
-		return;
-	}
-	
-	// Set up render data
+	const loadingProgram = Shader.createProgram(gl, "Billboard.vert.glsl", "PerlinNoise.frag.glsl");
+	loadingProgram.then((createdProgram) => {
+		program = createdProgram;
+	});
+	return loadingProgram;
+}
+
+export function compute(nodeData) {
+	// Prepare new render data
 	const resolution = [512, 512];
 	const uniforms = {
 		u_scale: { value: Node.getInPropertyValue(nodeData, "scale"), type: "float", vector: false, location: null },
