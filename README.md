@@ -3,7 +3,7 @@ Materialism is a web-based prototype of a node-based procedural material generat
 
 # Usage and Demos
 
-* [Start with a default node graph](https://keavon.github.io/Materialism/)  ![Materialism startup screengrab](https://files.keavon.com/-/BarePerkyBlackbuck/capture.png)
-* [Explore a simple diffuse-only demo (1)](https://keavon.github.io/Materialism/#demo1)  ![Materialism demo 1 screengrab](https://files.keavon.com/-/MaleOldlaceFulmar/capture.png)
-* [Explore a diffuse and displacement demo (2)](https://keavon.github.io/Materialism/#demo2)  ![Materialism demo 2 screengrab](https://files.keavon.com/-/PlayfulRoastedAssassinbug/capture.png)
-* [Explore a more sophisticated material demo (3)](https://keavon.github.io/Materialism/#demo3)  ![Materialism demo 3 screengrab](https://files.keavon.com/-/BlondDeeppinkZebratailedlizard/capture.png)
+* [Start with a default node graph  ![Materialism startup screengrab](https://files.keavon.com/-/BarePerkyBlackbuck/capture.png)](https://keavon.github.io/Materialism/)
+* [Explore a simple diffuse-only demo (1)  ![Materialism demo 1 screengrab](https://files.keavon.com/-/MaleOldlaceFulmar/capture.png)](https://keavon.github.io/Materialism/#demo1)
+* [Explore a diffuse and displacement demo (2)  ![Materialism demo 2 screengrab]](https://keavon.github.io/Materialism/#demo2)(https://files.keavon.com/-/PlayfulRoastedAssassinbug/capture.png)
+* [Explore a more sophisticated material demo (3)  ![Materialism demo 3 screengrab](https://files.keavon.com/-/BlondDeeppinkZebratailedlizard/capture.png)](https://keavon.github.io/Materialism/#demo3)
