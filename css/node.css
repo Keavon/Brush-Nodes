@@ -129,6 +129,7 @@ section label:focus-within input {
 
 /* Dropdown input box */
 section select {
+	text-align: left;
 	-moz-appearance: none;
 	-webkit-appearance: none;
 	appearance: none;
@@ -249,6 +250,7 @@ section .connector.color {
 section .connector.group-1-of-2 {
 	transform: translateY(-10px);
 }
+
 section .connector.group-2-of-2 {
 	transform: translateY(10px);
 }
@@ -256,6 +258,7 @@ section .connector.group-2-of-2 {
 section .connector.group-1-of-3 {
 	transform: translateY(-20px);
 }
+
 section .connector.group-3-of-3 {
 	transform: translateY(20px);
 }
@@ -263,12 +266,15 @@ section .connector.group-3-of-3 {
 section .connector.group-1-of-4 {
 	transform: translateY(-30px);
 }
+
 section .connector.group-2-of-4 {
 	transform: translateY(-10px);
 }
+
 section .connector.group-3-of-4 {
 	transform: translateY(10px);
 }
+
 section .connector.group-4-of-4 {
 	transform: translateY(30px);
 }

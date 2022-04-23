@@ -1,10 +1,12 @@
 import * as Node_PerlinNoise from "/Materialism/nodes/PerlinNoise.mjs";
+import * as Node_VoronoiNoise from "/Materialism/nodes/VoronoiNoise.mjs";
 import * as Node_Gradient from "/Materialism/nodes/Gradient.mjs";
 import * as Node_Blend from "/Materialism/nodes/Blend.mjs";
 import * as Node_Color from "/Materialism/nodes/Color.mjs";
 import * as Node_Output from "/Materialism/nodes/Output.mjs";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
+	"Voronoi Noise": Node_VoronoiNoise,
 	"Gradient": Node_Gradient,
 	"Blend": Node_Blend,
 	"Color": Node_Color,
