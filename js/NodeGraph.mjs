@@ -253,16 +253,23 @@ function graphClickHandler(event) {
 function graphWheelHandler(event) {
 	const minScale = 0.1;
 	const maxScale = 2.0;
+	const SCALE_SPEED = 0.5;
 
+	if (event.ctrlKey) {
 	let deltaScale = graphScale * scaleSpeed * (event.deltaY / -100);
 	const newScale = graphScale + deltaScale;
 	const newScaleClamped = Math.min(Math.max(newScale, minScale), maxScale);
+
 	const clampedExcess = newScale - newScaleClamped;
 	const deltaScaleClamped = deltaScale - clampedExcess;
 
 	graphScale = newScaleClamped;
 	graphOffsetX -= deltaScaleClamped * event.target.closest("body").clientWidth / 2;
 	graphOffsetY -= deltaScaleClamped * event.target.closest("body").clientHeight / 2;
+	} else {
+		graphOffsetX -= event.deltaX * SCALE_SPEED;
+		graphOffsetY -= event.deltaY * SCALE_SPEED;
+	}
 
 	updateGraphView();
 
