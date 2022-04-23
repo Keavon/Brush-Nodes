@@ -24,10 +24,14 @@ export default async function NodeGraph() {
 	const demoHappened = await Demo();
 	if (!demoHappened) {
 		// const perlin = await addNode("Perlin Noise", 50, 50);
-		const voronoi = await addNode("Voronoi Noise", 50, 50);
 		// const gradient = await addNode("Gradient", 50, 50);
-		const output = await addNode("Output", 400, 50);
-		connectWire(voronoi, "pattern", output, "diffuse");
+
+		const voronoi = await addNode("Voronoi Noise", 50, 50);
+		const levels = await addNode("Levels", 400, 50);
+		const output = await addNode("Output", 800, 50);
+
+		connectWire(voronoi, "pattern", levels, "input_texture");
+		connectWire(levels, "output_texture", output, "diffuse");
 	}
 }
 
@@ -301,6 +305,10 @@ function graphKeydownHandler(event) {
 
 	if (event.key.toLowerCase() === "b") {
 		addNode("Blend");
+	}
+
+	if (event.key.toLowerCase() === "l") {
+		addNode("Levels");
 	}
 
 	if (event.key.toLowerCase() === "c") {

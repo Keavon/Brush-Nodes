@@ -17,7 +17,6 @@ const definition = {
 			direction: "in",
 			dimensions: "0d",
 			type: "string",
-			// default: "F2 - F1",
 			default: "F1",
 			constraints: {},
 		},
