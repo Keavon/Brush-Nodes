@@ -23,9 +23,10 @@ export default async function NodeGraph() {
 
 	const demoHappened = await Demo();
 	if (!demoHappened) {
-		const perlin = await addNode("Perlin Noise", 50, 50);
+		// const perlin = await addNode("Perlin Noise", 50, 50);
+		const gradient = await addNode("Gradient", 50, 50);
 		const output = await addNode("Output", 400, 50);
-		connectWire(perlin, "pattern", output, "diffuse");
+		connectWire(gradient, "gradient", output, "diffuse");
 	}
 }
 
@@ -60,7 +61,7 @@ function graphMousedownHandler(event) {
 			const nodeElement = connector.closest("section");
 			const nodeData = nodeDatabase.find(node => node.element === nodeElement);
 			const connectorInput = nodeData.inConnections[identifier];
-			
+
 			let targetPath;
 			let targetNode = nodeData;
 			let targetIdentifier = identifier;
@@ -77,7 +78,7 @@ function graphMousedownHandler(event) {
 			else if (cursorWireDirectionOnNodeSide === "in" && connectorInput.length > 0) {
 				const sourceSide = connectorInput[0];
 				disconnectWire(sourceSide.node, sourceSide.identifier, nodeData, identifier);
-				
+
 				const connectorElement = sourceSide.node.element.querySelector(`.connector[data-identifier="${sourceSide.identifier}"]`);
 				cursorWireDirectionOnNodeSide = "out";
 				targetNode = sourceSide.node;
@@ -167,14 +168,14 @@ function graphMousemoveHandler(event) {
 
 	if (draggingSelection) {
 		moveSelectedNodes(mouseDelta);
-		
+
 		// Prevent mouse drag from highlighting text
 		event.preventDefault();
 	}
 
 	if (cursorWireConnection) {
 		const attachedConnectorElement = cursorWireConnection.node.element.querySelector(`.connector[data-identifier="${cursorWireConnection.identifier}"]`);
-		
+
 		if (cursorWireDirectionOnNodeSide === "out") updateWirePath(cursorWireConnection.wire, attachedConnectorElement, mousePosition);
 		else if (cursorWireDirectionOnNodeSide === "in") updateWirePath(cursorWireConnection.wire, mousePosition, attachedConnectorElement);
 
@@ -214,7 +215,7 @@ function graphMouseupHandler(event) {
 				const nodeElement = target.closest("section");
 				const nodeData = nodeDatabase.find(node => node.element === nodeElement);
 				const nodeIdentifier = target.closest(".connector").dataset["identifier"];
-				
+
 				if (cursorWireDirectionOnNodeSide === "out") connectWire(nodeSideData, nodeSideIdentifier, nodeData, nodeIdentifier);
 				else if (cursorWireDirectionOnNodeSide === "in") connectWire(nodeData, nodeIdentifier, nodeSideData, nodeSideIdentifier);
 			}
@@ -256,16 +257,16 @@ function graphWheelHandler(event) {
 	const SCALE_SPEED = 0.5;
 
 	if (event.ctrlKey) {
-	let deltaScale = graphScale * scaleSpeed * (event.deltaY / -100);
-	const newScale = graphScale + deltaScale;
-	const newScaleClamped = Math.min(Math.max(newScale, minScale), maxScale);
+		let deltaScale = graphScale * scaleSpeed * (event.deltaY / -100);
+		const newScale = graphScale + deltaScale;
+		const newScaleClamped = Math.min(Math.max(newScale, minScale), maxScale);
 
-	const clampedExcess = newScale - newScaleClamped;
-	const deltaScaleClamped = deltaScale - clampedExcess;
+		const clampedExcess = newScale - newScaleClamped;
+		const deltaScaleClamped = deltaScale - clampedExcess;
 
-	graphScale = newScaleClamped;
-	graphOffsetX -= deltaScaleClamped * event.target.closest("body").clientWidth / 2;
-	graphOffsetY -= deltaScaleClamped * event.target.closest("body").clientHeight / 2;
+		graphScale = newScaleClamped;
+		graphOffsetX -= deltaScaleClamped * event.target.closest("body").clientWidth / 2;
+		graphOffsetY -= deltaScaleClamped * event.target.closest("body").clientHeight / 2;
 	} else {
 		graphOffsetX -= event.deltaX * SCALE_SPEED;
 		graphOffsetY -= event.deltaY * SCALE_SPEED;
@@ -280,9 +281,13 @@ function graphKeydownHandler(event) {
 	if (event.key.toLowerCase() === "a" && event.ctrlKey) {
 		if (event.shiftKey) deselectAllNodes();
 		else selectAllNodes();
-		
+
 		event.preventDefault();
 		return;
+	}
+
+	if (event.key.toLowerCase() === "g") {
+		addNode("Gradient");
 	}
 
 	if (event.key.toLowerCase() === "p") {
@@ -308,13 +313,13 @@ function graphKeydownHandler(event) {
 
 export function addNode(nodeName, x = 100, y = 100, startSelected = false) {
 	return Node
-	.createNode(nodeName, x, y, startSelected)
-	.then((nodeData) => {
-		document.querySelector(".node-graph").appendChild(nodeData.element);
-		nodeDatabase.push(nodeData);
-		updateNodePosition(nodeData);
-		return nodeData;
-	});
+		.createNode(nodeName, x, y, startSelected)
+		.then((nodeData) => {
+			document.querySelector(".node-graph").appendChild(nodeData.element);
+			nodeDatabase.push(nodeData);
+			updateNodePosition(nodeData);
+			return nodeData;
+		});
 }
 
 export function removeNode(nodeData) {
@@ -340,7 +345,7 @@ export function removeNode(nodeData) {
 			});
 		});
 	});
-	
+
 	// Find all wires connected as outputs to remove
 	Object.keys(nodeData.outConnections).forEach((connectorName) => {
 		const connector = nodeData.outConnections[connectorName];
@@ -556,10 +561,10 @@ export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeId
 	// Connect the wire to the input
 	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
 	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
-	
+
 	// Notify widgets on this node bound to the identifier so they can update
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
-	
+
 	// Recompute everything downstream
 	Node.recomputeDownstreamNodes(inNodeData);
 
@@ -595,9 +600,9 @@ function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdenti
 	const inConnector = inNodeData.element.querySelector(`.connector[data-identifier="${inNodeIdentifier}"]`);
 	outConnector.dataset["outdegree"]--;
 	inConnector.dataset["indegree"]--;
-	
+
 	destroyWirePath(connection.wire);
-	
+
 	// Notify widgets on this node bound to the identifier so they can update
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
 
@@ -608,7 +613,7 @@ function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdenti
 function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
 	const outConnector = outNodeData.outConnections[outNodeIdentifier];
 	const outConnection = outConnector.find(c => c.identifier === inNodeIdentifier);
-	
+
 	const inConnector = inNodeData.inConnections[inNodeIdentifier];
 	const inConnection = inConnector.find(c => c.identifier === outNodeIdentifier);
 

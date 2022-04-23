@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Materialism</title>
-		<link rel="stylesheet" type="text/css" href="/Materialism/css/styles.css">
-		<link rel="stylesheet" type="text/css" href="/Materialism/css/node.css">
-		<link href="https://fonts.googleapis.com/css?family=Yantramanav:300,400,500" rel="stylesheet">
-		<script src="/Materialism/lib/webgl-obj-loader.min.js"></script>
-		<script type="module" src="/Materialism/js/Init.mjs"></script>
-	</head>
-	<body>
-		<div class="node-graph">
-			<span class="instructions">Add nodes with hotkeys: (P) Perlin Noise, (B) Blend</span>
-			<svg class="wires"></svg>
+<head>
+	<meta charset="utf-8">
+	<title>Materialism</title>
+	<link rel="stylesheet" type="text/css" href="/Materialism/css/styles.css">
+	<link rel="stylesheet" type="text/css" href="/Materialism/css/node.css">
+	<link href="https://fonts.googleapis.com/css?family=Yantramanav:300,400,500" rel="stylesheet">
+	<script src="/Materialism/lib/webgl-obj-loader.min.js"></script>
+	<script type="module" src="/Materialism/js/Init.mjs"></script>
+</head>
+<body>
+	<div class="node-graph">
+		<span class="instructions">Add nodes with hotkeys: (P) Perlin Noise, (B) Blend, (G) Gradient</span>
+		<svg class="wires"></svg>
+	</div>
+	<div class="viewports">
+		<div class="viewport-3d">
+			<canvas></canvas>
 		</div>
-		<div class="viewports">
-			<div class="viewport-3d">
-				<canvas></canvas>
-			</div>
-			<div class="viewport-2d">
-				<canvas></canvas>
-			</div>
+		<div class="viewport-2d">
+			<canvas></canvas>
 		</div>
-	</body>
+	</div>
+</body>
 </html>

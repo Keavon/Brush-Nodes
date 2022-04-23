@@ -1,9 +1,11 @@
 import * as Node_PerlinNoise from "/Materialism/nodes/PerlinNoise.mjs";
+import * as Node_Gradient from "/Materialism/nodes/Gradient.mjs";
 import * as Node_Blend from "/Materialism/nodes/Blend.mjs";
 import * as Node_Color from "/Materialism/nodes/Color.mjs";
 import * as Node_Output from "/Materialism/nodes/Output.mjs";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
+	"Gradient": Node_Gradient,
 	"Blend": Node_Blend,
 	"Color": Node_Color,
 	"Output": Node_Output,
@@ -112,7 +114,7 @@ function createNodeElement(nodeData, definition) {
 
 	// Give it all the specified rows
 	definition.rows.forEach((row) => nodeElement.appendChild(createRow(row, nodeData, definition)));
-	
+
 	// Append the node element to the DOM
 	return nodeElement;
 }
@@ -186,13 +188,13 @@ export function setFinalPropertyValueAndPropagate(nodeData, identifier, value) {
 	const savedRowData = nodeData.rowData[row.name];
 	savedRowData.inputValue = value;
 	if (widgets[row.type].updateElementDisplayValue) widgets[row.type].updateElementDisplayValue(nodeData, row);
-	
+
 	// Set the new value and update the node with any bound widgets
 	setPropertyValue(nodeData, identifier, value)
 
 	// Recompute this node with the new input
 	recomputeProperties(nodeData);
-	
+
 	// Recompute the whole downstream graph
 	recomputeDownstreamNodes(nodeData);
 }
@@ -201,7 +203,7 @@ export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 	const rows = nodes[nodeData.name].getDefinition().rows;
 	const outputBoundRow = rows.find(row => row.options && row.options.outputBoundIdentifier === identifier);
 	if (!outputBoundRow) return;
-	
+
 	const widgetToNotify = widgets[outputBoundRow.type];
 	if (widgetToNotify && widgetToNotify.propertyValueWasUpdated) {
 		widgetToNotify.propertyValueWasUpdated(nodeData, outputBoundRow);
