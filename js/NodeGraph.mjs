@@ -24,13 +24,13 @@ export default async function NodeGraph() {
 	const demoHappened = await Demo();
 	if (!demoHappened) {
 		// const perlin = await addNode("Perlin Noise", 50, 50);
-		// const gradient = await addNode("Gradient", 50, 50);
+		// const voronoi = await addNode("Voronoi Noise", 50, 50);
 
-		const voronoi = await addNode("Voronoi Noise", 50, 50);
+		const gradient = await addNode("Gradient", 50, 50);
 		const levels = await addNode("Levels", 400, 50);
 		const output = await addNode("Output", 800, 50);
 
-		connectWire(voronoi, "pattern", levels, "input_texture");
+		connectWire(gradient, "gradient", levels, "input_texture");
 		connectWire(levels, "output_texture", output, "diffuse");
 	}
 }
@@ -284,11 +284,13 @@ function graphWheelHandler(event) {
 
 function graphKeydownHandler(event) {
 	if (event.key.toLowerCase() === "a" && event.ctrlKey) {
-		if (event.shiftKey) deselectAllNodes();
-		else selectAllNodes();
+		if (document.activeElement.tagName !== "INPUT") {
+			if (event.shiftKey) deselectAllNodes();
+			else selectAllNodes();
 
-		event.preventDefault();
-		return;
+			event.preventDefault();
+			return;
+		}
 	}
 
 	if (event.key.toLowerCase() === "g") {
@@ -312,15 +314,15 @@ function graphKeydownHandler(event) {
 	}
 
 	if (event.key.toLowerCase() === "c") {
-		addNode("Color");
+		if (!event.ctrlKey && !event.shiftKey) addNode("Color");
 	}
 
 	if (event.key.toLowerCase() === "enter" && document.activeElement.closest("input")) {
 		document.activeElement.closest("input").blur();
 	}
 
-	if (event.key.toLowerCase() === "delete") {
-		removeSelectedNodes();
+	if (event.key.toLowerCase() === "backspace" || event.key.toLowerCase() === "delete") {
+		if (document.activeElement.tagName !== "INPUT") removeSelectedNodes();
 	}
 }
 

@@ -5,11 +5,21 @@ import * as NodeShader from "/Materialism/js/NodeShader.mjs";
 let program;
 let gl;
 
+const styleList = ["Linear Horizontal", "Linear Vertical", "Bookmatched X", "Bookmatched Y", "Radial"];
+
 const definition = {
 	// Defines the node name shown in its header
 	name: "Gradient",
 	// Defines input and output data model properties
 	properties: [
+		{
+			identifier: "style",
+			direction: "in",
+			dimensions: "0d",
+			type: "string",
+			default: "Linear Horizontal",
+			constraints: {},
+		},
 		{
 			identifier: "falloff",
 			direction: "in",
@@ -19,12 +29,20 @@ const definition = {
 			constraints: { min: 0, max: 1 },
 		},
 		{
-			identifier: "distance",
+			identifier: "thickness",
 			direction: "in",
 			dimensions: "0d",
 			type: "float",
 			default: 1,
 			constraints: { min: 0, max: 1 },
+		},
+		{
+			identifier: "radius",
+			direction: "in",
+			dimensions: "0d",
+			type: "float",
+			default: 1,
+			constraints: { min: 0 },
 		},
 		{
 			identifier: "gradient",
@@ -52,6 +70,18 @@ const definition = {
 		},
 		{ type: "Spacer" },
 		{
+			name: "style",
+			type: "Dropdown",
+			connectors: [],
+			options: {
+				label: "Style",
+				inputBoundIdentifier: "style",
+			},
+			data: {
+				options: styleList,
+			},
+		},
+		{
 			name: "gradient_falloff",
 			type: "Input",
 			options: {
@@ -66,14 +96,26 @@ const definition = {
 			data: {},
 		},
 		{
-			name: "gradient_distance",
+			name: "gradient_thickness",
 			type: "Input",
 			connectors: [
-				{ identifier: "distance", direction: "in", dimensions: "0d", type: "float" },
+				{ identifier: "thickness", direction: "in", dimensions: "0d", type: "float" },
 			],
 			options: {
-				label: "Distance",
-				inputBoundIdentifier: "distance",
+				label: "Thickness",
+				inputBoundIdentifier: "thickness",
+			},
+			data: {},
+		},
+		{
+			name: "gradient_radius",
+			type: "Input",
+			connectors: [
+				{ identifier: "radius", direction: "in", dimensions: "0d", type: "float" },
+			],
+			options: {
+				label: "Outer Radius",
+				inputBoundIdentifier: "radius",
 			},
 			data: {},
 		},
@@ -99,8 +141,10 @@ export function compute(nodeData) {
 	// Prepare new render data
 	const resolution = [512, 512];
 	const uniforms = {
+		u_style: { value: styleList.indexOf(Node.getInPropertyValue(nodeData, "style")), type: "int", vector: false, location: null },
 		u_falloff: { value: Node.getInPropertyValue(nodeData, "falloff"), type: "float", vector: false, location: null },
-		u_distance: { value: Node.getInPropertyValue(nodeData, "distance"), type: "float", vector: false, location: null },
+		u_thickness: { value: Node.getInPropertyValue(nodeData, "thickness"), type: "float", vector: false, location: null },
+		u_radius: { value: Node.getInPropertyValue(nodeData, "radius"), type: "float", vector: false, location: null },
 	};
 
 	NodeShader.initializeProgram(gl, program, resolution, uniforms);
