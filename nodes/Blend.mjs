@@ -126,8 +126,9 @@ export function compute(nodeData) {
 		u_background: { value: Node.getInPropertyValue(nodeData, "background"), location: null },
 	};
 
-	uniforms.u_foregroundExists.value = !!textures.u_foreground;
-	uniforms.u_backgroundExists.value = !!textures.u_background;
+	// TODO: It seems these will always be true
+	uniforms.u_foregroundExists.value = Boolean(textures.u_foreground);
+	uniforms.u_backgroundExists.value = Boolean(textures.u_background);
 
 	NodeShader.initializeProgram(gl, program, resolution, uniforms, textures); // TODO: Should only be called once
 	const framebuffer = NodeShader.renderToTexture(gl, program, resolution, uniforms);

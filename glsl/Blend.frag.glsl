@@ -2,11 +2,11 @@
 
 precision mediump float;
 
+uniform vec2 u_resolution;
 uniform sampler2D u_foreground;
 uniform sampler2D u_background;
 uniform bool u_foregroundExists;
 uniform bool u_backgroundExists;
-uniform vec2 u_resolution;
 uniform int u_mode;
 uniform float u_opacity;
 

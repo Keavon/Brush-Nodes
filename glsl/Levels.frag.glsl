@@ -2,9 +2,9 @@
 
 precision mediump float;
 
+uniform vec2 u_resolution;
 uniform sampler2D u_inputTexture;
 uniform sampler2D u_outputTexture;
-uniform vec2 u_resolution;
 uniform float u_shadows;
 uniform float u_midtones;
 uniform float u_highlights;

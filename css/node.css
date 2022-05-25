@@ -28,9 +28,18 @@ section .row {
 }
 
 section canvas {
-	width: 256px;
-	height: 256px;
+	width: 100%;
+	height: auto;
 	vertical-align: top;
+}
+
+section canvas[width="1024"],
+section canvas[width="2048"],
+section canvas[width="4096"],
+section canvas[width="8192"],
+section canvas[width="16384"],
+section canvas[width="32768"] {
+	width: 100%;
 }
 
 section h1,
