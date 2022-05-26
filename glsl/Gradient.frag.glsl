@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-uniform vec2 u_resolution;
+uniform ivec2 u_resolution;
 uniform int u_style;
 uniform float u_falloff;
 uniform float u_thickness;

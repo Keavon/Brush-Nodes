@@ -8,6 +8,7 @@ export function createGLContext(canvas = document.createElement("canvas")) {
 	return gl;
 }
 
+// WARNING: This function mutates its `uniforms` and `textures` arguments
 export function initializeProgram(gl, program, resolution, uniforms, textures = {}) {
 	// Prepare the canvas and shader
 	gl.canvas.width = resolution[0];
@@ -16,14 +17,14 @@ export function initializeProgram(gl, program, resolution, uniforms, textures = 
 	gl.useProgram(program);
 
 	// Add preset uniforms
-	const builtins = {
-		"u_resolution": { value: new Int32Array(resolution), type: "int", vector: true, location: null }
-	};
+	uniforms["u_resolution"] = { value: new Int32Array(resolution), type: "int", vector: true, location: null };
 
 	// Locate uniforms
-	const combinedUniforms = { ...builtins, ...textures, ...uniforms };
-	Object.entries(combinedUniforms).forEach(([uniformName, uniform]) => {
-		uniform.location = gl.getUniformLocation(program, uniformName);
+	Object.keys(uniforms).forEach((uniformName) => {
+		uniforms[uniformName].location = gl.getUniformLocation(program, uniformName);
+	});
+	Object.keys(textures).forEach((uniformName) => {
+		textures[uniformName].location = gl.getUniformLocation(program, uniformName);
 	});
 
 	// Send plane vertex coordinates
@@ -80,25 +81,11 @@ export function composite(gl, program, resolution, uniforms, textures = {}) {
 		if (!uniform.location) return;
 
 		if (uniform.type === "float") {
-			// These are for arrays of float/vec2/vec3/vec4 values
-			if (uniform.array1) {
-				gl.uniform1fv(uniform.location, uniform.value);
-				console.log(uniform);
-			}
-			else if (uniform.array2) gl.uniform2fv(uniform.location, uniform.value);
-			else if (uniform.array3) gl.uniform3fv(uniform.location, uniform.value);
-			else if (uniform.array4) gl.uniform4fv(uniform.location, uniform.value);
-			// This is a single-value float not provided as a vector
-			else if (!uniform.vector) gl.uniform1f(uniform.location, uniform.value);
-			// These are float vectors, either a single float/vec2/vec3/vec4 or an array of them
-			// The 1/2/3/4 corresponds to the float/vec2/vec3/vec4 data type in GLSL
-			// The `v` means we pass it a vector (array) of data based on the stride of the 1/2/3/4
-			// Passing a single stride's worth of data is a valid way to pass a single non-array float/vec2/vec3/vec4 to GLSL (so vec3 == vec3[1])
+			if (!uniform.vector) gl.uniform1f(uniform.location, uniform.value);
 			else if (uniform.value.length === 1) gl.uniform1fv(uniform.location, uniform.value);
 			else if (uniform.value.length === 2) gl.uniform2fv(uniform.location, uniform.value);
 			else if (uniform.value.length === 3) gl.uniform3fv(uniform.location, uniform.value);
 			else if (uniform.value.length === 4) gl.uniform4fv(uniform.location, uniform.value);
-			// Unrecognized value configuration
 			else console.error("Unknown data type for the uniform being set");
 		}
 		else if (uniform.type === "int") {

@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-uniform vec2 u_resolution;
+uniform ivec2 u_resolution;
 uniform int u_seed;
 uniform float u_scale;
 
@@ -85,8 +85,8 @@ float pnoise(vec2 P, vec2 rep, int seed) {
 
 void main() {
 	// gl_FragColor = vec4(v_uvCoordinates.xy, 0, 1);
-	int x = int(floor(v_uvCoordinates.x * u_resolution.x + 0.5));
-	int y = int(floor(v_uvCoordinates.y * u_resolution.y + 0.5));
+	int x = int(floor(v_uvCoordinates.x * float(u_resolution.x) + 0.5));
+	int y = int(floor(v_uvCoordinates.y * float(u_resolution.y) + 0.5));
 	
 	// bool evenOdd = mod(float(x + y), 2.0) == 0.0;
 	

@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-uniform vec2 u_resolution;
+uniform ivec2 u_resolution;
 uniform int u_style;
 uniform float u_scale;
 uniform float u_jitter;
@@ -94,8 +94,8 @@ vec2 cellular(vec2 P) {
 
 void main() {
 	// gl_FragColor = vec4(v_uvCoordinates.xy, 0, 1);
-	int x = int(floor(v_uvCoordinates.x * u_resolution.x + 0.5));
-	int y = int(floor(v_uvCoordinates.y * u_resolution.y + 0.5));
+	int x = int(floor(v_uvCoordinates.x * float(u_resolution.x) + 0.5));
+	int y = int(floor(v_uvCoordinates.y * float(u_resolution.y) + 0.5));
 
 	vec2 f1AndF2 = cellular(v_uvCoordinates * u_scale);
 	float f1 = f1AndF2.x;

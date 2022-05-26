@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-uniform vec2 u_resolution;
+uniform ivec2 u_resolution;
 uniform vec3 u_rgba;
 
 in vec2 v_uvCoordinates;

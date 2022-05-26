@@ -19,8 +19,7 @@ const definition = {
 			identifier: "depth",
 			direction: "in",
 			dimensions: "1d",
-			type: "float",
-			default: 0.0,
+			type: "color",
 			constraints: {}
 		},
 		{
@@ -45,9 +44,9 @@ const definition = {
 		{ type: "Spacer" },
 		{
 			name: "slice_depth",
-			type: "Input",
+			type: "Label",
 			connectors: [
-				{ identifier: "depth", direction: "in", dimensions: "1d", type: "float" },
+				{ identifier: "depth", direction: "in", dimensions: "1d", type: "color" },
 			],
 			options: {
 				label: "Depth",
@@ -78,16 +77,18 @@ export function compute(nodeData) {
 	const resolution = [1024, 128];
 	// TODO: Reenable retrieval from the node socket when we can encode large arrays as textures instead of uniforms
 	// const timeSeriesData = Node.getInPropertyValue(nodeData, "depth")
-	const timeSeriesData = Array(resolution[0]).fill(0).map((_, i) => 1 - (Math.cos((i / resolution[0]) * Math.PI * 2) + 1) / 2);
+	// const timeSeriesData = Array(resolution[0]).fill(0).map((_, i) => 1 - (Math.cos((i / resolution[0]) * Math.PI * 2) + 1) / 2);
 	const uniforms = {
-		u_depth: { value: timeSeriesData, type: "float", array1: true, location: null },
+		// u_depth: { value: timeSeriesData, type: "float", array1: true, location: null },
 	};
 	const textures = {
 		u_sliceable: { value: Node.getInPropertyValue(nodeData, "sliceable"), location: null },
+		u_depth_bit_texture: { value: Node.getInPropertyValue(nodeData, "depth"), location: null },
 	};
 
 	NodeShader.initializeProgram(gl, program, resolution, uniforms, textures); // TODO: Should only be called once
 	const framebuffer = NodeShader.renderToTexture(gl, program, resolution, uniforms);
+	console.log(uniforms);
 	NodeShader.composite(gl, program, resolution, uniforms, textures);
 	const image = NodeShader.readRenderedTexture(gl, framebuffer, resolution);
 

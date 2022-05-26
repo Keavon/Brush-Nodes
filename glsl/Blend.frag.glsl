@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-uniform vec2 u_resolution;
+uniform ivec2 u_resolution;
 uniform sampler2D u_foreground;
 uniform sampler2D u_background;
 uniform bool u_foregroundExists;
