@@ -225,20 +225,22 @@ export function recomputeProperties(nodeData) {
 	}
 }
 
+// Recomputes all downstream nodes, returning if a cycle was found
 export function recomputeDownstreamNodes(nodeData) {
 	const depthGroups = findChildNodeDepths(nodeData);
 	if (!depthGroups){
-		console.error("Cycle detected");
-		return;
+		console.info("Cycle detected");
+		return true;
 	}
 	depthGroups.forEach((depthGroup) => {
 		depthGroup.forEach((node) => {
 			recomputeProperties(node);
 		});
 	});
+	return false;
 }
 
-export function findChildNodeDepths(nodeData, outConnectorsToTraverse) {
+export function findChildNodeDepths(nodeData) {
 	const previousVisited = [[]];
 	const nodeDepths = new Map();
 	nodeDepths.set(nodeData, 0);
