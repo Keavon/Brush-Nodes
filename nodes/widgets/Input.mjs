@@ -21,6 +21,73 @@ export function createWidget(nodeData, row, definition) {
 	inputElement.value = value;
 	inputElement.addEventListener("input", event => inputChangeHandler(event, nodeData, row, false));
 	inputElement.addEventListener("change", event => inputChangeHandler(event, nodeData, row, true));
+
+
+	// Allow the input field to be dragged across to quickly change the value
+
+	// The multiplier to change how sensitive the mouse is
+	const MOVEMENT_RATE = 1 / 600;
+	// An unrounded value for smooth dragging
+	let rawValue = value;
+	// Is the input currently being edited with text input?
+	let focused = false;
+	// Is the input currently being dragged?
+	let dragging = false;
+
+	// Use a horizontal arrow cursor to show users it can be dragged
+	inputElement.style.cursor = "w-resize";
+
+	// Initalise drag to false
+	inputElement.onpointerdown = () => {
+		dragging = false;
+	};
+
+	inputElement.onfocus = () => {
+		if (dragging) {
+			// Don't focus the element when it has just been dragged
+			inputElement.blur();
+		} else {
+			// Reset cursor for text entry
+			inputElement.style.cursor = "auto";
+			focused = true;
+		}
+	}
+
+	inputElement.onblur = () => {
+		// Once text input complete, revert back to a horizontal arrow
+		inputElement.style.cursor = "w-resize";
+		focused = false;
+	}
+
+	inputElement.onpointermove = (event) => {
+		if (event.buttons === 1 && !focused) {
+			// Initalise the drag
+			if (!dragging) {
+				dragging = true;
+				inputElement.setPointerCapture(event.pointerId);
+				rawValue = inputElement.value;
+				inputElement.tabIndex = "";
+			}
+
+			// Caclulate a scalar multiplier factor
+			const movement = event.movementX;
+			let scalarMultiplier = 1 + Math.abs(movement) * MOVEMENT_RATE;
+			if (movement < 0) scalarMultiplier = 1 / scalarMultiplier;
+
+			// Update the value
+			rawValue *= scalarMultiplier;
+			inputElement.value = Math.round(rawValue * 1000) / 1000;
+			inputChangeHandler(event, nodeData, row, false);
+		}
+	};
+
+	inputElement.onpointerup = (event) => {
+		if (dragging){
+			// Commit the change
+			inputChangeHandler(event, nodeData, row, true);
+			inputElement.releasePointerCapture(event.pointerId);
+		}
+	};
 	
 	labelElement.appendChild(inputElement);
 	return labelElement;
