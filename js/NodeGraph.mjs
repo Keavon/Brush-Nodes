@@ -352,11 +352,13 @@ function graphKeydownHandler(event) {
 	}
 }
 
-export function addNode(nodeName, x = 100, y = 100, startSelected = false) {
+export function addNode(nodeName, x, y, startSelected = false) {
+	const nodeGraph = document.querySelector(".node-graph");
+
 	return Node
-		.createNode(nodeName, x, y, startSelected)
+		.createNode(nodeName, x ?? (nodeGraph.clientWidth / (graphScale * 2) - graphOffsetX - 100), y ?? (nodeGraph.clientHeight / (graphScale * 2) - graphOffsetY - 200), startSelected)
 		.then((nodeData) => {
-			document.querySelector(".node-graph").appendChild(nodeData.element);
+			nodeGraph.appendChild(nodeData.element);
 			nodeDatabase.push(nodeData);
 			updateNodePosition(nodeData);
 			return nodeData;
