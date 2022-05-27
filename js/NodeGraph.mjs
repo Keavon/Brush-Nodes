@@ -56,6 +56,7 @@ function graphMousedownHandler(event) {
 		// No nodes selected (clear selection)
 		if (!target.closest("section")) {
 			deselectAllNodes();
+			// Begin a pan on LMB click on empty area
 			panningSelection = true;
 			return;
 		}
@@ -238,7 +239,7 @@ function graphMouseupHandler(event) {
 		selectionWasDragged = false;
 	}
 
-	// Middle mouse button
+	// Stop panning with left or middle mouse
 	if (event.button === 1 || event.button === 0) {
 		if (panningSelection) {
 			panningSelection = false;
