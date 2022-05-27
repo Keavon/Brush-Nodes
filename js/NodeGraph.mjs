@@ -43,7 +43,7 @@ function setupEvents() {
 	nodeGraph.addEventListener("mousemove", graphMousemoveHandler);
 	nodeGraph.addEventListener("mouseup", graphMouseupHandler);
 	nodeGraph.addEventListener("click", graphClickHandler);
-	nodeGraph.addEventListener("wheel", graphWheelHandler);
+	nodeGraph.addEventListener("wheel", graphWheelHandler, { passive: false });
 	nodeGraph.addEventListener("keydown", graphKeydownHandler);
 }
 
@@ -56,6 +56,8 @@ function graphMousedownHandler(event) {
 		// No nodes selected (clear selection)
 		if (!target.closest("section")) {
 			deselectAllNodes();
+			// Begin a pan on LMB click on empty area
+			panningSelection = true;
 			return;
 		}
 
@@ -167,8 +169,8 @@ function graphMousemoveHandler(event) {
 	const mouseDelta = [event.movementX / graphScale, event.movementY / graphScale];
 
 	if (panningSelection && (event.movementX !== 0 || event.movementY !== 0)) {
-		graphOffsetX += mouseDelta[0] * graphScale;
-		graphOffsetY += mouseDelta[1] * graphScale;
+		graphOffsetX += mouseDelta[0];
+		graphOffsetY += mouseDelta[1];
 		updateGraphView();
 	}
 
@@ -237,8 +239,8 @@ function graphMouseupHandler(event) {
 		selectionWasDragged = false;
 	}
 
-	// Middle mouse button
-	if (event.button === 1) {
+	// Stop panning with left or middle mouse
+	if (event.button === 1 || event.button === 0) {
 		if (panningSelection) {
 			panningSelection = false;
 			return;
@@ -261,21 +263,42 @@ function graphWheelHandler(event) {
 	const minScale = 0.1;
 	const maxScale = 2.0;
 	const SCALE_SPEED = 0.5;
+	const WHEEL_RATE = 1 / 600;
 
 	if (event.ctrlKey) {
-		let deltaScale = graphScale * scaleSpeed * (event.deltaY / -100);
-		const newScale = graphScale + deltaScale;
-		const newScaleClamped = Math.min(Math.max(newScale, minScale), maxScale);
+		// Prevent the default browser zoom behaviour
+		event.preventDefault();
 
-		const clampedExcess = newScale - newScaleClamped;
-		const deltaScaleClamped = deltaScale - clampedExcess;
+		// Caclulate a zoom factor as a scalar multiplier of the current zoom
+		const scroll = event.deltaY;
+		let zoomFactor = 1 + Math.abs(scroll) * WHEEL_RATE;
+		if (scroll > 0) zoomFactor = 1 / zoomFactor;
 
-		graphScale = newScaleClamped;
-		graphOffsetX -= deltaScaleClamped * event.target.closest("body").clientWidth / 2;
-		graphOffsetY -= deltaScaleClamped * event.target.closest("body").clientHeight / 2;
+		// Clamp zoom factor to the min and max scale
+		zoomFactor = Math.min(Math.max(graphScale * zoomFactor, minScale), maxScale) / graphScale;
+
+		graphScale *= zoomFactor;
+
+		const { x, y, width, height } = event.target.closest("body").getBoundingClientRect();
+
+		// Calculate the change in size in viewport
+		const deltaSizeX = width - width / zoomFactor;
+		const deltaSizeY = height - height / zoomFactor;
+
+		// Apply a position adjustment to keep mouse centred
+		const deltaX = deltaSizeX * ((event.x - x) / width);
+		const deltaY = deltaSizeY * ((event.y - y) / height);
+		graphOffsetX -= (deltaX / graphScale) * zoomFactor;
+		graphOffsetY -= (deltaY / graphScale) * zoomFactor;
 	} else {
-		graphOffsetX -= event.deltaX * SCALE_SPEED;
-		graphOffsetY -= event.deltaY * SCALE_SPEED;
+		// Shift flips axis
+		if (event.shiftKey){
+			graphOffsetX -= (event.deltaY / graphScale) * SCALE_SPEED;
+			graphOffsetY -= (event.deltaX / graphScale) * SCALE_SPEED;
+		} else {
+			graphOffsetX -= (event.deltaX / graphScale) * SCALE_SPEED;
+			graphOffsetY -= (event.deltaY / graphScale) * SCALE_SPEED;
+		}
 	}
 
 	updateGraphView();
@@ -470,7 +493,7 @@ function updateGraphView() {
 }
 
 function updateNodePosition(nodeData) {
-	nodeData.element.style.transform = `translate(${nodeData.x * graphScale + graphOffsetX}px, ${nodeData.y * graphScale + graphOffsetY}px) scale(${graphScale})`;
+	nodeData.element.style.transform = `scale(${graphScale}) translate(${nodeData.x + graphOffsetX}px, ${nodeData.y + graphOffsetY}px)`;
 	updateSelectionOutline(nodeData);
 
 	// Update any wires connected to out connections
