@@ -18,22 +18,83 @@ let graphOffsetY = 0;
 let graphScale = 1;
 const scaleSpeed = 0.1;
 
+const storageKey = "save_document";
+
 export default async function NodeGraph() {
 	setupEvents();
 
 	const demoHappened = await Demo();
 	if (!demoHappened) {
-		// const perlin = await addNode("Perlin Noise", 50, 50);
-		// const gradient = await addNode("Gradient", 50, 50);
-		// const levels = await addNode("Levels", 400, 50);
+		const previousDocument = localStorage.getItem(storageKey);
+		if (previousDocument){
+			await loadGraph(JSON.parse(previousDocument));
+		} else {
+			await defaultGraph();
 
-		const voronoi = await addNode("Voronoi Noise", 50, 50);
-		const slicer = await addNode("Slicer", 400, 50);
-		const output = await addNode("Output", 800, 50);
-
-		connectWire(voronoi, "pattern", slicer, "sliceable");
-		connectWire(slicer, "streak", output, "diffuse");
+			saveGraph();
+		}
 	}
+}
+
+export function saveGraph() {
+	const nodes = [];
+	const connections = [];
+	nodeDatabase.reverse().forEach((node, nodeIndex) => {
+		console.log(node.rowData);
+		const rowData = Object.entries(node.rowData)
+			.filter((val) => (val[1]["inputValue"]) !== undefined)
+			.map(([identifier, {inputValue}]) => {
+				const boundIdentifier = Node.getBoundIdentifier(node, identifier);
+				return {identifier: boundIdentifier, inputValue: Node.getOutPropertyValue(node, boundIdentifier)};
+			});
+		nodes.push({ name: node.name, x: node.x, y: node.y, rowData});
+		console.log(rowData);
+		Object
+			.entries(node.inConnections)
+			.forEach(([outIdentifier, inConnections]) => {
+				inConnections.forEach((inConnection) => {
+					connections.push({
+						outNodeIndex: nodeIndex,
+						outIdentifier,
+						inNodeIndex: nodeDatabase.indexOf(inConnection.node),
+						inIdentifier: inConnection.identifier
+					});
+				})
+			});
+	});
+
+	const data = { nodes, connections };
+	console.info("Saving graph", data);
+	localStorage[storageKey] = JSON.stringify(data);
+}
+
+async function loadGraph(graph) {
+	const { nodes, connections } = graph;
+
+	const spawnedNodes = await nodes.map(async (nodeData) => {
+		console.info("Adding node ",nodeData.name);
+		const node = await addNode(nodeData.name, nodeData.x, nodeData.y);
+		nodeData.rowData.forEach(({identifier, inputValue}) => {
+			console.info("Setting property value", nodeData.name, identifier, "to", inputValue);
+			Node.setFinalPropertyValueAndPropagate(node, identifier, inputValue);
+		});
+		return node;
+	});
+
+	// TODO: can break depending on order of wires.
+	await connections.forEach(async ({inNodeIndex, inIdentifier, outNodeIndex, outIdentifier}) => {
+		console.info("Connecting wire from", (await spawnedNodes[inNodeIndex]).name, inIdentifier, "to", (await spawnedNodes[outNodeIndex]).name, outIdentifier);
+		connectWire(await spawnedNodes[inNodeIndex], inIdentifier, await spawnedNodes[outNodeIndex], outIdentifier)
+	});
+}
+
+async function defaultGraph() {
+	const voronoi = await addNode("Voronoi Noise", 50, 50);
+	const slicer = await addNode("Slicer", 400, 50);
+	const output = await addNode("Output", 800, 50);
+
+	connectWire(voronoi, "pattern", slicer, "sliceable");
+	connectWire(slicer, "streak", output, "diffuse");
 }
 
 function setupEvents() {
@@ -231,6 +292,8 @@ function graphMouseupHandler(event) {
 
 			cursorWireConnection = null;
 			cursorWireDirectionOnNodeSide = null;
+
+			saveGraph();
 		}
 
 		draggingSelection = false;

@@ -205,6 +205,11 @@ export function setFinalPropertyValueAndPropagate(nodeData, identifier, value) {
 	recomputeDownstreamNodes(nodeData);
 }
 
+export function getBoundIdentifier(nodeData, identifier){
+	const rows = nodes[nodeData.name].getDefinition().rows;
+	return rows.find(row => row.name === identifier).options.inputBoundIdentifier;
+}
+
 export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 	const rows = nodes[nodeData.name].getDefinition().rows;
 	const outputBoundRow = rows.find(row => row.options && row.options.outputBoundIdentifier === identifier);
