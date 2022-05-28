@@ -108,7 +108,7 @@ export function resetRowDataToPropertyValue(nodeData, rowData, rowDefinition) {
 	rowData.inputValue = value;
 }
 
-function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
+async function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
 	const newValue = validate(event.target.value);
 
 	// Update the row's widget state data
@@ -120,10 +120,10 @@ function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
 	Node.setPropertyValue(nodeData, propertyIdentifier, newValue)
 
 	// Recompute this node with the new input
-	Node.recomputeProperties(nodeData);
+	await Node.recomputeProperties(nodeData);
 
 	// If the user is finished tweaking this input, recompute the whole downstream graph
-	if (recomputeGraphDownstream) Node.recomputeDownstreamNodes(nodeData);
+	if (recomputeGraphDownstream) await Node.recomputeDownstreamNodes(nodeData);
 }
 
 function validate(value) {

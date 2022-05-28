@@ -101,18 +101,15 @@ export function getDefinition() {
 	return definition;
 }
 
-export function setup() {
+export async function setup() {
 	// Create one WebGl context for this node definition
 	gl = NodeShader.createGLContext();
 
-	const loadingProgram = Shader.createProgram(gl, "Billboard.vert.glsl", "Blend.frag.glsl");
-	loadingProgram.then((createdProgram) => {
-		program = createdProgram;
-	});
-	return loadingProgram;
+	program = await Shader.createProgram(gl, "Billboard.vert.glsl", "Blend.frag.glsl");
+	return program;
 }
 
-export function compute(nodeData) {
+export async function compute(nodeData) {
 	// Set up render data
 	const resolution = [512, 512];
 	const uniforms = {
@@ -130,9 +127,9 @@ export function compute(nodeData) {
 	uniforms.u_foregroundExists.value = Boolean(textures.u_foreground);
 	uniforms.u_backgroundExists.value = Boolean(textures.u_background);
 
-	NodeShader.initializeProgram(gl, program, resolution, uniforms, textures); // TODO: Should only be called once
-	const framebuffer = NodeShader.renderToTexture(gl, program, resolution, uniforms);
-	NodeShader.composite(gl, program, resolution, uniforms, textures);
+	NodeShader.initializeProgram(gl, await program, resolution, uniforms, textures); // TODO: Should only be called once
+	const framebuffer = NodeShader.renderToTexture(gl, await program, resolution, uniforms);
+	NodeShader.composite(gl, await program, resolution, uniforms, textures);
 	const image = NodeShader.readRenderedTexture(gl, framebuffer, resolution);
 
 	Node.setPropertyValue(nodeData, "composite", image);

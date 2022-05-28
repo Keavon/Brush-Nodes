@@ -24,31 +24,24 @@ export default async function NodeGraph() {
 	setupEvents();
 
 	const demoHappened = await Demo();
-	if (!demoHappened) {
-		const previousDocument = localStorage.getItem(storageKey);
-		if (previousDocument){
-			await loadGraph(JSON.parse(previousDocument));
-		} else {
-			await defaultGraph();
+	if (demoHappened) return;
 
-			saveGraph();
-		}
-	}
+	const previousDocument = localStorage.getItem(storageKey);
+	if (previousDocument) await loadGraph(JSON.parse(previousDocument));
+	else await defaultGraph();
 }
 
 export function saveGraph() {
 	const nodes = [];
 	const connections = [];
 	nodeDatabase.reverse().forEach((node, nodeIndex) => {
-		console.log(node.rowData);
 		const rowData = Object.entries(node.rowData)
 			.filter((val) => (val[1]["inputValue"]) !== undefined)
-			.map(([identifier, {inputValue}]) => {
+			.map(([identifier, { inputValue }]) => {
 				const boundIdentifier = Node.getBoundIdentifier(node, identifier);
-				return {identifier: boundIdentifier, inputValue: Node.getOutPropertyValue(node, boundIdentifier)};
+				return { identifier: boundIdentifier, inputValue: Node.getOutPropertyValue(node, boundIdentifier) };
 			});
-		nodes.push({ name: node.name, x: node.x, y: node.y, rowData});
-		console.log(rowData);
+		nodes.push({ name: node.name, x: node.x, y: node.y, rowData });
 		Object
 			.entries(node.inConnections)
 			.forEach(([outIdentifier, inConnections]) => {
@@ -71,25 +64,26 @@ export function saveGraph() {
 async function loadGraph(graph) {
 	const { nodes, connections } = graph;
 
-	const spawnedNodes = await nodes.map(async (nodeData) => {
-		console.info("Adding node ",nodeData.name);
+	const spawnedNodes = await Promise.all(nodes.map(async (nodeData) => {
+		console.info("Adding node", nodeData.name, "at", nodeData.x, ",", nodeData.y);
 		const node = await addNode(nodeData.name, nodeData.x, nodeData.y);
-		nodeData.rowData.forEach(({identifier, inputValue}) => {
+		nodeData.rowData.forEach(async ({ identifier, inputValue }) => {
 			console.info("Setting property value", nodeData.name, identifier, "to", inputValue);
-			Node.setFinalPropertyValueAndPropagate(node, identifier, inputValue);
+			await Node.setFinalPropertyValueAndPropagate(node, identifier, inputValue);
 		});
 		return node;
-	});
+	}));
 
-	// TODO: can break depending on order of wires.
-	await connections.forEach(async ({inNodeIndex, inIdentifier, outNodeIndex, outIdentifier}) => {
-		console.info("Connecting wire from", (await spawnedNodes[inNodeIndex]).name, inIdentifier, "to", (await spawnedNodes[outNodeIndex]).name, outIdentifier);
-		connectWire(await spawnedNodes[inNodeIndex], inIdentifier, await spawnedNodes[outNodeIndex], outIdentifier)
+	const awaitConnected = [];
+	await connections.forEach(async ({ inNodeIndex, inIdentifier, outNodeIndex, outIdentifier }) => {
+		console.info("Connecting wire from", (spawnedNodes[inNodeIndex]).name, inIdentifier, "to", (spawnedNodes[outNodeIndex]).name, outIdentifier);
+		awaitConnected.push(await connectWire(spawnedNodes[inNodeIndex], inIdentifier, spawnedNodes[outNodeIndex], outIdentifier));
 	});
+	await Promise.all(awaitConnected);
 }
 
 async function defaultGraph() {
-  // const perlin = await addNode("Perlin Noise", 50, 50);
+	// const perlin = await addNode("Perlin Noise", 50, 50);
 	// const gradient = await addNode("Gradient", 50, 50);
 	// const levels = await addNode("Levels", 400, 50);
 
@@ -99,9 +93,9 @@ async function defaultGraph() {
 	const gradient2 = await addNode("Gradient", 50, 450);
 	const output = await addNode("Output", 800, 50);
 
-	connectWire(gradient1, "gradient", slicer, "sliceable");
-	connectWire(gradient2, "gradient", slicer, "depth");
-	connectWire(slicer, "streak", output, "diffuse");
+	await connectWire(gradient1, "gradient", slicer, "sliceable");
+	await connectWire(gradient2, "gradient", slicer, "depth");
+	await connectWire(slicer, "streak", output, "diffuse");
 }
 
 function setupEvents() {
@@ -115,7 +109,7 @@ function setupEvents() {
 	nodeGraph.addEventListener("keydown", graphKeydownHandler);
 }
 
-function graphMousedownHandler(event) {
+async function graphMousedownHandler(event) {
 	const target = event.target;
 	dragInitiationTarget = target;
 
@@ -153,7 +147,7 @@ function graphMousedownHandler(event) {
 			// Moving an existing connection
 			else if (cursorWireDirectionOnNodeSide === "in" && connectorInput.length > 0) {
 				const sourceSide = connectorInput[0];
-				disconnectWire(sourceSide.node, sourceSide.identifier, nodeData, identifier);
+				await disconnectWire(sourceSide.node, sourceSide.identifier, nodeData, identifier);
 
 				const connectorElement = sourceSide.node.element.querySelector(`.connector[data-identifier="${sourceSide.identifier}"]`);
 				cursorWireDirectionOnNodeSide = "out";
@@ -265,7 +259,7 @@ function graphMousemoveHandler(event) {
 	}
 }
 
-function graphMouseupHandler(event) {
+async function graphMouseupHandler(event) {
 	const target = event.target;
 
 	// Left mouse button
@@ -292,8 +286,8 @@ function graphMouseupHandler(event) {
 				const nodeData = nodeDatabase.find(node => node.element === nodeElement);
 				const nodeIdentifier = target.closest(".connector").dataset["identifier"];
 
-				if (cursorWireDirectionOnNodeSide === "out") connectWire(nodeSideData, nodeSideIdentifier, nodeData, nodeIdentifier);
-				else if (cursorWireDirectionOnNodeSide === "in") connectWire(nodeData, nodeIdentifier, nodeSideData, nodeSideIdentifier);
+				if (cursorWireDirectionOnNodeSide === "out") await connectWire(nodeSideData, nodeSideIdentifier, nodeData, nodeIdentifier);
+				else if (cursorWireDirectionOnNodeSide === "in") await connectWire(nodeData, nodeIdentifier, nodeSideData, nodeSideIdentifier);
 			}
 
 			const path = cursorWireConnection.wire;
@@ -425,7 +419,7 @@ function graphKeydownHandler(event) {
 export function addNode(nodeName, x, y, startSelected = false) {
 	const nodeGraph = document.querySelector(".node-graph");
 
-	return Node
+	const newNode = Node
 		.createNode(nodeName, x ?? (nodeGraph.clientWidth / (graphScale * 2) - graphOffsetX - 100), y ?? (nodeGraph.clientHeight / (graphScale * 2) - graphOffsetY - 200), startSelected)
 		.then((nodeData) => {
 			nodeGraph.appendChild(nodeData.element);
@@ -433,9 +427,13 @@ export function addNode(nodeName, x, y, startSelected = false) {
 			updateNodePosition(nodeData);
 			return nodeData;
 		});
+
+	saveGraph();
+
+	return newNode;
 }
 
-export function removeNode(nodeData) {
+export async function removeNode(nodeData) {
 	// Disallow removing the single output node
 	if (nodeData.name === "Output") return;
 
@@ -476,8 +474,10 @@ export function removeNode(nodeData) {
 	});
 
 	// Now remove those found connections once the looping is over
-	inConnectionsToRemove.forEach((toRemove) => disconnectWire(...toRemove));
-	outConnectionsToRemove.forEach((toRemove) => disconnectWire(...toRemove));
+	await Promise.all([
+		...inConnectionsToRemove.map(async (toRemove) => await disconnectWire(...toRemove)),
+		...outConnectionsToRemove.map(async (toRemove) => await disconnectWire(...toRemove)),
+	]);
 
 	// Deselect the node to remove the selection outline element
 	deselectNode(nodeData);
@@ -487,10 +487,12 @@ export function removeNode(nodeData) {
 
 	// Remove the node from the node database
 	nodeDatabase.splice(nodeDatabase.indexOf(nodeData), 1);
+
+	saveGraph();
 }
 
-function removeSelectedNodes() {
-	nodeDatabase.filter(node => node.selected).forEach(nodeData => removeNode(nodeData));
+async function removeSelectedNodes() {
+	await Promise.all(nodeDatabase.filter(node => node.selected).map(async (nodeData) => await removeNode(nodeData)));
 }
 
 function moveSelectedNodes(deltaMove) {
@@ -503,6 +505,8 @@ function moveSelectedNodes(deltaMove) {
 	});
 
 	if (deltaMove[0] !== 0 || deltaMove[1] !== 0) selectionWasDragged = true;
+
+	if (selectionWasDragged) saveGraph();
 }
 
 function selectAllNodes() {
@@ -650,7 +654,7 @@ function destroyWirePath(path) {
 	path.parentElement.removeChild(path);
 }
 
-export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+export async function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
 	// Prevent connecting nodes as input->input or output->output
 	if (!(outNodeIdentifier in outNodeData.outConnections && inNodeIdentifier in inNodeData.inConnections)) return;
 
@@ -666,29 +670,34 @@ export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeId
 
 	// Clear any existing inputs because inputs are exclusive to one wire
 	let restoreWireIfCycle;
-	inNodeData.inConnections[inNodeIdentifier].forEach((inConnectionSource) => {
+	let awaitDisconnected = [];
+	inNodeData.inConnections[inNodeIdentifier].forEach(async (inConnectionSource) => {
 		const outNodeDataForConnection = inConnectionSource.node;
 		const outNodeIdentifierForConnection = inConnectionSource.identifier;
 		restoreWireIfCycle = [outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier];
-		disconnectWire(outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier);
+		awaitDisconnected.push(await disconnectWire(outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier));
 	});
+	await Promise.all(awaitDisconnected);
 
 	// Connect the wire to the input
 	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
 	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
 
 	const causedCycle = Node.detectCycle(inNodeData);
+	awaitDisconnected = [];
+	let awaitConnected = [];
 	if (causedCycle) {
-		disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier);
-		if (restoreWireIfCycle) connectWire(...restoreWireIfCycle);
+		awaitDisconnected.push(await disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier));
+		if (restoreWireIfCycle) awaitConnected.push(await connectWire(...restoreWireIfCycle));
 		return;
 	}
+	await Promise.all([...awaitDisconnected, ...awaitConnected]);
 
 	// Notify widgets on this node bound to the identifier so they can update
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
 
 	// Recompute everything downstream
-	Node.recomputeDownstreamNodes(inNodeData);
+	await Node.recomputeDownstreamNodes(inNodeData);
 
 	// Find the connector dot DOM elements and increment the connection degrees
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
@@ -701,12 +710,10 @@ export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeId
 	outConnection.wire = wire;
 	inConnection.wire = wire;
 
-	// TODO: Implement a cycle detector that doesn't require the connection be already made, which would allow this code to moved to the top, thus preventing this from disconnecting any existing wire
-	// Prevent connecting nodes in a cycle
-	// if (Node.findChildNodeDepths(inNodeData) === null) disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier);
+	saveGraph();
 }
 
-function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
+async function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
 	const outConnections = outNodeData.outConnections[outNodeIdentifier];
 	const inConnections = inNodeData.inConnections[inNodeIdentifier];
 
@@ -730,7 +737,9 @@ function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdenti
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
 
 	// Recompute everything downstream
-	Node.recomputeDownstreamNodes(inNodeData);
+	await Node.recomputeDownstreamNodes(inNodeData);
+
+	saveGraph();
 }
 
 function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {

@@ -3,7 +3,8 @@ const placeholderImage = {
 	resolution: [1, 1],
 };
 
-export function createGLContext(canvas = document.createElement("canvas")) {
+export function createGLContext() {
+	const canvas = document.createElement("canvas");
 	const gl = canvas.getContext("webgl2");
 	return gl;
 }
