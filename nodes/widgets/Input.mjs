@@ -33,13 +33,16 @@ export function createWidget(nodeData, row, definition) {
 	let focused = false;
 	// Is the input currently being dragged?
 	let dragging = false;
+	// Has the user clicked down on the input?
+	let readyToDrag = false;
 
 	// Use a horizontal arrow cursor to show users it can be dragged
 	inputElement.style.cursor = "w-resize";
 
-	// Initalise drag to false
+	// Initialize drag to false
 	inputElement.onpointerdown = () => {
 		dragging = false;
+		readyToDrag = true;
 	};
 
 	inputElement.onfocus = () => {
@@ -60,8 +63,8 @@ export function createWidget(nodeData, row, definition) {
 	}
 
 	inputElement.onpointermove = (event) => {
-		if (event.buttons === 1 && !focused) {
-			// Initalise the drag
+		if (event.buttons === 1 && !focused && readyToDrag) {
+			// Initialize the drag
 			if (!dragging) {
 				dragging = true;
 				inputElement.setPointerCapture(event.pointerId);
@@ -69,7 +72,7 @@ export function createWidget(nodeData, row, definition) {
 				inputElement.tabIndex = "";
 			}
 
-			// Caclulate a scalar multiplier factor
+			// Calculate a scalar multiplier factor
 			const movement = event.movementX;
 			let scalarMultiplier = 1 + Math.abs(movement) * MOVEMENT_RATE;
 			if (movement < 0) scalarMultiplier = 1 / scalarMultiplier;
@@ -82,13 +85,14 @@ export function createWidget(nodeData, row, definition) {
 	};
 
 	inputElement.onpointerup = (event) => {
-		if (dragging){
+		if (dragging) {
 			// Commit the change
 			inputChangeHandler(event, nodeData, row, true);
 			inputElement.releasePointerCapture(event.pointerId);
 		}
+		readyToDrag = false;
 	};
-	
+
 	labelElement.appendChild(inputElement);
 	return labelElement;
 }
@@ -106,7 +110,7 @@ export function resetRowDataToPropertyValue(nodeData, rowData, rowDefinition) {
 
 function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
 	const newValue = validate(event.target.value);
-	
+
 	// Update the row's widget state data
 	const savedRowData = nodeData.rowData[row.name];
 	savedRowData.inputValue = newValue;
@@ -117,7 +121,7 @@ function inputChangeHandler(event, nodeData, row, recomputeGraphDownstream) {
 
 	// Recompute this node with the new input
 	Node.recomputeProperties(nodeData);
-	
+
 	// If the user is finished tweaking this input, recompute the whole downstream graph
 	if (recomputeGraphDownstream) Node.recomputeDownstreamNodes(nodeData);
 }
