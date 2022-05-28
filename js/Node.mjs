@@ -230,19 +230,23 @@ export function recomputeProperties(nodeData) {
 	}
 }
 
-// Recomputes all downstream nodes, returning if a cycle was found
-export function recomputeDownstreamNodes(nodeData) {
+export function detectCycle(nodeData) {
 	const depthGroups = findChildNodeDepths(nodeData);
-	if (!depthGroups){
+	if (!depthGroups) {
 		console.info("Cycle detected");
 		return true;
 	}
+	return false;
+}
+
+// Recomputes all downstream nodes, returning true if a cycle was found
+export function recomputeDownstreamNodes(nodeData) {
+	const depthGroups = findChildNodeDepths(nodeData) || [];
 	depthGroups.forEach((depthGroup) => {
 		depthGroup.forEach((node) => {
 			recomputeProperties(node);
 		});
 	});
-	return false;
 }
 
 export function findChildNodeDepths(nodeData) {
