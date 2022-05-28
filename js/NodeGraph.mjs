@@ -597,32 +597,31 @@ export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeId
 	const outConnection = { node: inNodeData, identifier: inNodeIdentifier, wire: null };
 	outNodeData.outConnections[outNodeIdentifier].push(outConnection);
 
-	// Store the old in connectors so that they can either be cleared or restored
-	const oldInConnectors = inNodeData.inConnections[inNodeIdentifier]
-
-	// Connect the wire to the input
-	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
-	inNodeData.inConnections[inNodeIdentifier] = [inConnection];
-
-	// Recompute everything downstream
-	const cycle = Node.recomputeDownstreamNodes(inNodeData);
-
-	// If a cycle is detected on the new graph, then restore the old graph
-	if (cycle){
-		outNodeData.outConnections[outNodeIdentifier].pop();
-		inNodeData.inConnections[inNodeIdentifier] = oldInConnectors;
-		return;
-	}
-
 	// Clear any existing inputs because inputs are exclusive to one wire
-	oldInConnectors.forEach((inConnectionSource) => {
+	let restoreWireIfCycle;
+	inNodeData.inConnections[inNodeIdentifier].forEach((inConnectionSource) => {
 		const outNodeDataForConnection = inConnectionSource.node;
 		const outNodeIdentifierForConnection = inConnectionSource.identifier;
+		restoreWireIfCycle = [outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier];
 		disconnectWire(outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier);
 	});
 
+	// Connect the wire to the input
+	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
+	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
+
+	const causedCycle = Node.detectCycle(inNodeData);
+	if (causedCycle) {
+		disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier);
+		if (restoreWireIfCycle) connectWire(...restoreWireIfCycle);
+		return;
+	}
+
 	// Notify widgets on this node bound to the identifier so they can update
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
+
+	// Recompute everything downstream
+	Node.recomputeDownstreamNodes(inNodeData);
 
 	// Find the connector dot DOM elements and increment the connection degrees
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);
@@ -657,7 +656,8 @@ function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdenti
 	outConnector.dataset["outdegree"]--;
 	inConnector.dataset["indegree"]--;
 
-	destroyWirePath(connection.wire);
+	// The wire SVG might not exist because the wire is being immediately destroyed due to a cycle, before the SVG was created for it
+	if (connection.wire) destroyWirePath(connection.wire);
 
 	// Notify widgets on this node bound to the identifier so they can update
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
