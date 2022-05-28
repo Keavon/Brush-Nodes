@@ -10,16 +10,25 @@
 	<script type="module" src="/Materialism/js/Init.mjs"></script>
 </head>
 <body>
-	<div class="node-graph">
-		<span class="instructions">Add nodes with hotkeys: (P) Perlin Noise, (V) Voronoi Noise, (B) Blend, (L) Levels, (G) Gradient, (S) Slicer</span>
-		<svg class="wires"></svg>
-	</div>
-	<div class="viewports">
-		<div class="viewport-3d">
-			<canvas></canvas>
+	<div class="column left">
+		<div class="node-graph">
+			<span class="instructions">Add nodes with hotkeys: (P) Perlin Noise, (V) Voronoi Noise, (B) Blend, (L) Levels, (G) Gradient, (S) Slicer</span>
+			<svg class="wires"></svg>
 		</div>
-		<div class="viewport-2d">
-			<canvas></canvas>
+		<div class="brush-viewport">
+			<div class="viewport-strip">
+				<canvas></canvas>
+			</div>
+		</div>
+	</div>
+	<div class="column right">
+		<div class="material-viewports">
+			<div class="viewport-3d">
+				<canvas></canvas>
+			</div>
+			<div class="viewport-2d">
+				<canvas></canvas>
+			</div>
 		</div>
 	</div>
 </body>

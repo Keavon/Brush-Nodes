@@ -89,11 +89,18 @@ async function loadGraph(graph) {
 }
 
 async function defaultGraph() {
-	const voronoi = await addNode("Voronoi Noise", 50, 50);
+  // const perlin = await addNode("Perlin Noise", 50, 50);
+	// const gradient = await addNode("Gradient", 50, 50);
+	// const levels = await addNode("Levels", 400, 50);
+
+	// const voronoi = await addNode("Voronoi Noise", 50, 50);
 	const slicer = await addNode("Slicer", 400, 50);
+	const gradient1 = await addNode("Gradient", 50, 50);
+	const gradient2 = await addNode("Gradient", 50, 450);
 	const output = await addNode("Output", 800, 50);
 
-	connectWire(voronoi, "pattern", slicer, "sliceable");
+	connectWire(gradient1, "gradient", slicer, "sliceable");
+	connectWire(gradient2, "gradient", slicer, "depth");
 	connectWire(slicer, "streak", output, "diffuse");
 }
 
@@ -104,7 +111,7 @@ function setupEvents() {
 	nodeGraph.addEventListener("mousemove", graphMousemoveHandler);
 	nodeGraph.addEventListener("mouseup", graphMouseupHandler);
 	nodeGraph.addEventListener("click", graphClickHandler);
-	nodeGraph.addEventListener("wheel", graphWheelHandler);
+	nodeGraph.addEventListener("wheel", graphWheelHandler, { passive: false });
 	nodeGraph.addEventListener("keydown", graphKeydownHandler);
 }
 
@@ -117,6 +124,8 @@ function graphMousedownHandler(event) {
 		// No nodes selected (clear selection)
 		if (!target.closest("section")) {
 			deselectAllNodes();
+			// Begin a pan on LMB click on empty area
+			panningSelection = true;
 			return;
 		}
 
@@ -228,8 +237,8 @@ function graphMousemoveHandler(event) {
 	const mouseDelta = [event.movementX / graphScale, event.movementY / graphScale];
 
 	if (panningSelection && (event.movementX !== 0 || event.movementY !== 0)) {
-		graphOffsetX += mouseDelta[0] * graphScale;
-		graphOffsetY += mouseDelta[1] * graphScale;
+		graphOffsetX += mouseDelta[0];
+		graphOffsetY += mouseDelta[1];
 		updateGraphView();
 	}
 
@@ -300,8 +309,8 @@ function graphMouseupHandler(event) {
 		selectionWasDragged = false;
 	}
 
-	// Middle mouse button
-	if (event.button === 1) {
+	// Stop panning with left or middle mouse
+	if (event.button === 1 || event.button === 0) {
 		if (panningSelection) {
 			panningSelection = false;
 			return;
@@ -324,21 +333,42 @@ function graphWheelHandler(event) {
 	const minScale = 0.1;
 	const maxScale = 2.0;
 	const SCALE_SPEED = 0.5;
+	const WHEEL_RATE = 1 / 600;
 
 	if (event.ctrlKey) {
-		let deltaScale = graphScale * scaleSpeed * (event.deltaY / -100);
-		const newScale = graphScale + deltaScale;
-		const newScaleClamped = Math.min(Math.max(newScale, minScale), maxScale);
+		// Prevent the default browser zoom behaviour
+		event.preventDefault();
 
-		const clampedExcess = newScale - newScaleClamped;
-		const deltaScaleClamped = deltaScale - clampedExcess;
+		// Caclulate a zoom factor as a scalar multiplier of the current zoom
+		const scroll = event.deltaY;
+		let zoomFactor = 1 + Math.abs(scroll) * WHEEL_RATE;
+		if (scroll > 0) zoomFactor = 1 / zoomFactor;
 
-		graphScale = newScaleClamped;
-		graphOffsetX -= deltaScaleClamped * event.target.closest("body").clientWidth / 2;
-		graphOffsetY -= deltaScaleClamped * event.target.closest("body").clientHeight / 2;
+		// Clamp zoom factor to the min and max scale
+		zoomFactor = Math.min(Math.max(graphScale * zoomFactor, minScale), maxScale) / graphScale;
+
+		graphScale *= zoomFactor;
+
+		const { x, y, width, height } = event.target.closest("body").getBoundingClientRect();
+
+		// Calculate the change in size in viewport
+		const deltaSizeX = width - width / zoomFactor;
+		const deltaSizeY = height - height / zoomFactor;
+
+		// Apply a position adjustment to keep mouse centred
+		const deltaX = deltaSizeX * ((event.x - x) / width);
+		const deltaY = deltaSizeY * ((event.y - y) / height);
+		graphOffsetX -= (deltaX / graphScale) * zoomFactor;
+		graphOffsetY -= (deltaY / graphScale) * zoomFactor;
 	} else {
-		graphOffsetX -= event.deltaX * SCALE_SPEED;
-		graphOffsetY -= event.deltaY * SCALE_SPEED;
+		// Shift flips axis
+		if (event.shiftKey) {
+			graphOffsetX -= (event.deltaY / graphScale) * SCALE_SPEED;
+			graphOffsetY -= (event.deltaX / graphScale) * SCALE_SPEED;
+		} else {
+			graphOffsetX -= (event.deltaX / graphScale) * SCALE_SPEED;
+			graphOffsetY -= (event.deltaY / graphScale) * SCALE_SPEED;
+		}
 	}
 
 	updateGraphView();
@@ -392,11 +422,13 @@ function graphKeydownHandler(event) {
 	}
 }
 
-export function addNode(nodeName, x = 100, y = 100, startSelected = false) {
+export function addNode(nodeName, x, y, startSelected = false) {
+	const nodeGraph = document.querySelector(".node-graph");
+
 	return Node
-		.createNode(nodeName, x, y, startSelected)
+		.createNode(nodeName, x ?? (nodeGraph.clientWidth / (graphScale * 2) - graphOffsetX - 100), y ?? (nodeGraph.clientHeight / (graphScale * 2) - graphOffsetY - 200), startSelected)
 		.then((nodeData) => {
-			document.querySelector(".node-graph").appendChild(nodeData.element);
+			nodeGraph.appendChild(nodeData.element);
 			nodeDatabase.push(nodeData);
 			updateNodePosition(nodeData);
 			return nodeData;
@@ -517,7 +549,7 @@ function updateSelectionOutline(nodeData) {
 	nodeData.selected.style.height = `${bounds.height}px`;
 	nodeData.selected.style.left = `${bounds.left}px`;
 	nodeData.selected.style.top = `${bounds.top}px`;
-	nodeData.selected.style.borderRadius = `${10 * scale}px`;
+	nodeData.selected.style.borderRadius = `${4 * scale}px`;
 }
 
 function updateGraphView() {
@@ -533,7 +565,7 @@ function updateGraphView() {
 }
 
 function updateNodePosition(nodeData) {
-	nodeData.element.style.transform = `translate(${nodeData.x * graphScale + graphOffsetX}px, ${nodeData.y * graphScale + graphOffsetY}px) scale(${graphScale})`;
+	nodeData.element.style.transform = `scale(${graphScale}) translate(${nodeData.x + graphOffsetX}px, ${nodeData.y + graphOffsetY}px)`;
 	updateSelectionOutline(nodeData);
 
 	// Update any wires connected to out connections
@@ -632,22 +664,32 @@ export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeId
 	const outConnection = { node: inNodeData, identifier: inNodeIdentifier, wire: null };
 	outNodeData.outConnections[outNodeIdentifier].push(outConnection);
 
+	// Store the old in connectors so that they can either be cleared or restored
+	const oldInConnectors = inNodeData.inConnections[inNodeIdentifier]
+
+	// Connect the wire to the input
+	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
+	inNodeData.inConnections[inNodeIdentifier] = [inConnection];
+
+	// Recompute everything downstream
+	const cycle = Node.recomputeDownstreamNodes(inNodeData);
+
+	// If a cycle is detected on the new graph, then restore the old graph
+	if (cycle){
+		outNodeData.outConnections[outNodeIdentifier].pop();
+		inNodeData.inConnections[inNodeIdentifier] = oldInConnectors;
+		return;
+	}
+
 	// Clear any existing inputs because inputs are exclusive to one wire
-	inNodeData.inConnections[inNodeIdentifier].forEach((inConnectionSource) => {
+	oldInConnectors.forEach((inConnectionSource) => {
 		const outNodeDataForConnection = inConnectionSource.node;
 		const outNodeIdentifierForConnection = inConnectionSource.identifier;
 		disconnectWire(outNodeDataForConnection, outNodeIdentifierForConnection, inNodeData, inNodeIdentifier);
 	});
 
-	// Connect the wire to the input
-	const inConnection = { node: outNodeData, identifier: outNodeIdentifier, wire: null };
-	inNodeData.inConnections[inNodeIdentifier].push(inConnection);
-
 	// Notify widgets on this node bound to the identifier so they can update
 	Node.notifyBoundWidgetsOfUpdatedProperty(inNodeData, inNodeIdentifier);
-
-	// Recompute everything downstream
-	Node.recomputeDownstreamNodes(inNodeData);
 
 	// Find the connector dot DOM elements and increment the connection degrees
 	const outConnector = outNodeData.element.querySelector(`.connector[data-identifier="${outNodeIdentifier}"]`);

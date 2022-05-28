@@ -5,6 +5,14 @@ const definition = {
 	name: "Output",
 	properties: [
 		{
+			identifier: "workflow",
+			direction: "in",
+			dimensions: "0d",
+			type: "string",
+			default: "Brush",
+			constraints: {},
+		},
+		{
 			identifier: "diffuse",
 			direction: "in",
 			dimensions: "2d",
@@ -21,6 +29,19 @@ const definition = {
 	],
 	rows: [
 		{ type: "Spacer" },
+		{
+			name: "workflow",
+			type: "Dropdown",
+			connectors: [],
+			data: {
+				options: ["Brush", "Material"],
+			},
+			options: {
+				label: "Workflow",
+				inputBoundIdentifier: "workflow",
+				outputBoundIdentifier: "visualization",
+			},
+		},
 		{
 			name: "diffuse_output",
 			type: "Output",
@@ -53,13 +74,19 @@ export function getDefinition() {
 }
 
 export function compute(nodeData) {
-	Object.keys(definition.rows).forEach((rowName) => {
-		const row = definition.rows[rowName];
+	Object.values(definition.rows).forEach((row) => {
 		if (!row.options) return;
 
 		const identifier = row.options.outputBoundIdentifier;
-		const image = Node.getInPropertyValue(nodeData, identifier);
 
-		ViewportShader.updateImage(row.options.textureUniformName, image);
+		if (identifier === "visualization") {
+			const workflow = row.data.inputValue;
+
+			document.querySelector(".column.right").style.display = workflow === "Material" ? "" : "none";
+			document.querySelector(".brush-viewport").style.display = workflow === "Brush" ? "" : "none";
+		} else {
+			const image = Node.getInPropertyValue(nodeData, identifier);
+			ViewportShader.updateImage(row.options.textureUniformName, image);
+		}
 	});
 }

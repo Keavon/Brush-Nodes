@@ -8,10 +8,25 @@ body {
 	overflow: hidden;
 	font-size: 0;
 	overscroll-behavior: none;
+	display: flex;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+}
+
+.column.left {
+	flex: 1 1 auto;
+	width: 100%;
+}
+
+.column.right {
+	width: 25%;
 }
 
 .node-graph {
-	width: 75%;
+	width: 100%;
 	height: 100%;
 	display: inline-block;
 	overflow: hidden;
@@ -31,22 +46,26 @@ body {
 	text-align: center;
 }
 
-.viewports {
-	width: 25%;
+.brush-viewport canvas {
+	width: 100%;
+	height: 200px;
+}
+
+.material-viewports {
 	height: 100%;
 	display: inline-block;
 }
 
-.viewports .viewport-3d,
-.viewports .viewport-2d {
+.material-viewports .viewport-3d,
+.material-viewports .viewport-2d {
 	width: 100%;
 	height: 50%;
 	background: black;
 	position: relative;
 }
 
-.viewports .viewport-3d canvas,
-.viewports .viewport-2d canvas {
+.material-viewports .viewport-3d canvas,
+.material-viewports .viewport-2d canvas {
 	width: 100%;
 	height: 100%;
 	display: block;

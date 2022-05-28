@@ -230,41 +230,36 @@ export function recomputeProperties(nodeData) {
 	}
 }
 
+// Recomputes all downstream nodes, returning if a cycle was found
 export function recomputeDownstreamNodes(nodeData) {
 	const depthGroups = findChildNodeDepths(nodeData);
+	if (!depthGroups){
+		console.info("Cycle detected");
+		return true;
+	}
 	depthGroups.forEach((depthGroup) => {
 		depthGroup.forEach((node) => {
 			recomputeProperties(node);
 		});
 	});
+	return false;
 }
 
-export function findChildNodeDepths(nodeData, outConnectorsToTraverse) {
-	// const allVisitedNodes = [];
+export function findChildNodeDepths(nodeData) {
+	const previousVisited = [[]];
 	const nodeDepths = new Map();
 	nodeDepths.set(nodeData, 0);
 	const nodesToVisit = [nodeData];
 	let maxDepth = 0;
 
-	// Object.keys(outConnectorsToTraverse).forEach((outConnectorIdentifier) => {
-	// 	const connector = outConnectorsToTraverse[outConnectorIdentifier];
-	// 	const connectionDestinationNodes = connector.map(connection => connection.node);
-	// 	connectionDestinationNodes.forEach((node) => {
-	// 		nodeGroupsAtDepths[1].push(node);
-	// 		nodeDepths.set(node, 1);
-	// 		if (!nodesToVisit.includes(node)) nodesToVisit.push(node);
-	// 	});
-	// });
-
 	while (nodesToVisit.length > 0) {
 		const currentNode = nodesToVisit.pop();
+		const currentPrevious = previousVisited.pop();
 		const currentNodeDepth = nodeDepths.get(currentNode);
 
 		// Cycle detection
-		// if (allVisitedNodes.includes(currentNode)) return null;
-		// allVisitedNodes.push(currentNode);
-		// const potentialCycle = nodeDepths.get(currentNode);
-		// if (potentialCycle !== undefined && potentialCycle) return null;
+		if (currentPrevious.includes(currentNode)) return null;
+		currentPrevious.push(currentNode);
 
 		Object.keys(currentNode.outConnections).forEach((outConnectorIdentifier) => {
 			const connector = currentNode.outConnections[outConnectorIdentifier];
@@ -276,6 +271,8 @@ export function findChildNodeDepths(nodeData, outConnectorsToTraverse) {
 				nodeDepths.set(node, depth);
 				// if (!nodesToVisit.includes(node)) // Untested potential optimization
 				nodesToVisit.push(node);
+
+				previousVisited.push(currentPrevious.map((x) => x));
 			});
 		});
 	}

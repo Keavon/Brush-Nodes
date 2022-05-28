@@ -1,18 +1,25 @@
 import * as Shader from "/Materialism/js/Shader.mjs";
 import * as Mat4 from "/Materialism/js/Mat4.mjs";
 
+// Viewports
 const viewport3D = {};
 const viewport2D = {};
+const viewportStrip = {};
+
+// Canvases
 viewport3D.canvas = document.querySelector(".viewport-3d canvas");
 viewport2D.canvas = document.querySelector(".viewport-2d canvas");
-viewport2D.program = null;
+viewportStrip.canvas = document.querySelector(".viewport-strip canvas");
+
+// Programs
 viewport3D.program = null;
+viewport2D.program = null;
+viewportStrip.program = null;
+
+// Meshes
 viewport3D.mesh = null;
-viewport2D.uniforms = {
-	u_resolution: { value: null, type: "int", vector: true, location: null },
-	u_diffuseExists: { value: null, type: "int", vector: false, location: null },
-	u_displacementExists: { value: null, type: "int", vector: false, location: null },
-};
+
+// Uniforms
 viewport3D.uniforms = {
 	u_resolution: { value: null, type: "int", vector: true, location: null },
 	u_model: { value: null, type: "matrix", location: null },
@@ -21,11 +28,27 @@ viewport3D.uniforms = {
 	u_diffuseExists: { value: null, type: "bool", vector: false, location: null },
 	u_displacementExists: { value: null, type: "bool", vector: false, location: null },
 };
+viewport2D.uniforms = {
+	u_resolution: { value: null, type: "int", vector: true, location: null },
+	u_diffuseExists: { value: null, type: "int", vector: false, location: null },
+	u_displacementExists: { value: null, type: "int", vector: false, location: null },
+};
+viewportStrip.uniforms = {
+	u_resolution: { value: null, type: "int", vector: true, location: null },
+	u_diffuseExists: { value: null, type: "int", vector: false, location: null },
+	u_displacementExists: { value: null, type: "int", vector: false, location: null },
+};
+
+// Textures
 viewport3D.textures = {
 	u_diffuse: { value: null, location: null },
 	u_displacement: { value: null, location: null },
 };
 viewport2D.textures = {
+	u_diffuse: { value: null, location: null },
+	u_displacement: { value: null, location: null },
+};
+viewportStrip.textures = {
 	u_diffuse: { value: null, location: null },
 	u_displacement: { value: null, location: null },
 };
@@ -66,15 +89,19 @@ function loadMesh() {
 export function updateImage(textureUniformName, image) {
 	const texture3D = viewport3D.textures[textureUniformName];
 	const texture2D = viewport2D.textures[textureUniformName];
+	const textureStrip = viewportStrip.textures[textureUniformName];
 
 	const textureIndex3D = Object.keys(viewport3D.textures).indexOf(textureUniformName);
 	const textureIndex2D = Object.keys(viewport2D.textures).indexOf(textureUniformName);
-	
+	const textureIndexStrip = Object.keys(viewportStrip.textures).indexOf(textureUniformName);
+
 	texture3D.value = image;
 	texture2D.value = image;
+	textureStrip.value = image;
 
 	const context3D = viewport3D.canvas.getContext("webgl2");
 	const context2D = viewport2D.canvas.getContext("webgl2");
+	const contextStrip = viewportStrip.canvas.getContext("webgl2");
 
 	if (image && texture3D.location && texture3D.value) {
 		viewport3D.uniforms[`${textureUniformName}Exists`].value = true;
@@ -93,12 +120,21 @@ export function updateImage(textureUniformName, image) {
 		viewport2D.uniforms[`${textureUniformName}Exists`].value = false;
 		sendTexture(context2D, placeholderImage, textureIndex2D);
 	}
+
+	if (image && textureStrip.location && textureStrip.value) {
+		viewportStrip.uniforms[`${textureUniformName}Exists`].value = true;
+		sendTexture(contextStrip, image, textureIndexStrip);
+	}
+	else {
+		viewportStrip.uniforms[`${textureUniformName}Exists`].value = false;
+		sendTexture(contextStrip, placeholderImage, textureIndexStrip);
+	}
 }
 
 function sendTexture(gl, image, index) {
 	const maxTextureUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 	if (index >= maxTextureUnits) console.error("Your browser does not support this many texture units");
-	
+
 	// Create and bind a texture container
 	const tex = gl.createTexture();
 	gl.activeTexture(gl[`TEXTURE${index}`]);
@@ -122,6 +158,7 @@ function sendTexture(gl, image, index) {
 export default function ViewportShader() {
 	setupAndRender3D();
 	setupAndRender2D();
+	setupAndRenderStrip();
 }
 
 function setupAndRender3D() {
@@ -133,6 +170,12 @@ function setupAndRender3D() {
 function setupAndRender2D() {
 	setup2D().then((resolve, reject) => {
 		render2D();
+	});
+}
+
+function setupAndRenderStrip() {
+	setupStrip().then((resolve, reject) => {
+		renderStrip();
 	});
 }
 
@@ -153,19 +196,37 @@ function setup3D() {
 
 function setup2D() {
 	const gl = viewport2D.canvas.getContext("webgl2");
-	
+
 	const mesh = {
 		vertices: [-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0],
 		textures: [0, 0, 1, 0, 1, 1, 0, 1],
 		indices: [0, 1, 2, 2, 3, 0],
 		vertexNormals: [0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1],
 	};
-	
+
 	const loadingProgram = Shader.createProgram(gl, "Viewport2D.vert.glsl", "Viewport2D.frag.glsl");
 	return loadingProgram.then((data) => {
 		viewport2D.program = data;
 		viewport2D.mesh = mesh;
 		initializeProgram(gl, viewport2D.program, viewport2D.uniforms, viewport2D.textures, mesh);
+	});
+}
+
+function setupStrip() {
+	const gl = viewportStrip.canvas.getContext("webgl2");
+
+	const mesh = {
+		vertices: [-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0],
+		textures: [0, 0, 1, 0, 1, 1, 0, 1],
+		indices: [0, 1, 2, 2, 3, 0],
+		vertexNormals: [0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1],
+	};
+
+	const loadingProgram = Shader.createProgram(gl, "ViewportStrip.vert.glsl", "ViewportStrip.frag.glsl");
+	return loadingProgram.then((data) => {
+		viewportStrip.program = data;
+		viewportStrip.mesh = mesh;
+		initializeProgram(gl, viewportStrip.program, viewportStrip.uniforms, viewportStrip.textures, mesh);
 	});
 }
 
@@ -189,15 +250,29 @@ function render3D() {
 function render2D() {
 	// Get context
 	const gl = viewport2D.canvas.getContext("webgl2");
-	
+
 	// Update uniform value data
 	viewport2D.uniforms["u_resolution"].value = resizeCanvas(gl);
-	
+
 	// Render the canvas
 	draw(gl, viewport2D);
 
 	// Run again next frame
 	requestAnimationFrame(render2D);
+}
+
+function renderStrip() {
+	// Get context
+	const gl = viewportStrip.canvas.getContext("webgl2");
+
+	// Update uniform value data
+	viewportStrip.uniforms["u_resolution"].value = resizeCanvas(gl);
+
+	// Render the canvas
+	draw(gl, viewportStrip, [1, 1, 1, 1]);
+
+	// Run again next frame
+	requestAnimationFrame(renderStrip);
 }
 
 function resizeCanvas(gl) {
@@ -221,7 +296,7 @@ function initializeProgram(gl, program, uniforms, textures, mesh) {
 		// Find and set the uniform location for the texture's sampler2D uniform
 		const location = gl.getUniformLocation(program, uniformName);
 		textures[uniformName].location = location;
-		
+
 		// Set the sampler2D to use the index as the texture unit
 		gl.uniform1i(location, index);
 
@@ -245,7 +320,7 @@ function initializeProgram(gl, program, uniforms, textures, mesh) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.textures), gl.STATIC_DRAW);
 	gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-	
+
 	// Send plane normal vectors
 	const normalBuffer = gl.createBuffer();
 	const normalAttributeLocation = gl.getAttribLocation(program, "a_normalVectors");
@@ -260,7 +335,7 @@ function initializeProgram(gl, program, uniforms, textures, mesh) {
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), gl.STATIC_DRAW);
 }
 
-function draw(gl, viewport) {
+function draw(gl, viewport, clearColor = [0, 0, 0, 1]) {
 	const uniforms = viewport.uniforms;
 
 	// Uniforms
@@ -296,7 +371,7 @@ function draw(gl, viewport) {
 		else console.error("Unknown data type for the uniform being set");
 	});
 
-	gl.clearColor(0, 0, 0, 1);
+	gl.clearColor(...clearColor);
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
 	gl.drawElements(gl.TRIANGLES, viewport.mesh.indices.length, gl.UNSIGNED_SHORT, 0);

@@ -12,5 +12,5 @@ out vec4 Color;
 
 void main() {
 	if (u_diffuseExists == 1) Color = texture(u_diffuse, v_uvCoordinates);
-	else Color = vec4(0.5, 0.5, 0.5, 1);
+	else Color = vec4(1., 1., 1., 1.);
 }

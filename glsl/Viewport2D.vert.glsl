@@ -5,18 +5,22 @@ in vec3 a_normalVectors;
 in vec2 a_uvCoordinates;
 
 uniform ivec2 u_resolution;
+uniform sampler2D u_diffuse;
 
 out vec2 v_uvCoordinates;
 out vec3 v_normalVectors;
 
 void main() {
-	float aspectRatio = float(u_resolution.x) / float(u_resolution.y);
-	float xScale = 1.0 / aspectRatio;
+	float viewportAspectRatio = float(u_resolution.x) / float(u_resolution.y);
+	float xScale = 1.0 / viewportAspectRatio;
 	float yScale = 1.0;
-	if (aspectRatio < 1.0) {
+	if (viewportAspectRatio < 1.0) {
 		xScale = 1.0;
-		yScale = aspectRatio;
+		yScale = viewportAspectRatio;
 	}
+
+	ivec2 textureDimensions = textureSize(u_diffuse, 0);
+	float textureAspectRatio = float(textureDimensions.y) / float(textureDimensions.x);
 	float subscale = 1.0;
 
 	v_uvCoordinates = a_uvCoordinates;
