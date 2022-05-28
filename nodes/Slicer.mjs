@@ -2,6 +2,9 @@ import * as Node from "/Materialism/js/Node.mjs";
 import * as Shader from "/Materialism/js/Shader.mjs";
 import * as NodeShader from "/Materialism/js/NodeShader.mjs";
 
+// Strip resolution
+const STRIP_RESOLUTION = [2048, 128]; // Max WebGL supports is 16384
+
 let program;
 let gl;
 
@@ -46,7 +49,7 @@ const definition = {
 			name: "slice_depth",
 			type: "Label",
 			connectors: [
-				{ identifier: "depth", direction: "in", dimensions: "1d", type: "color" },
+				{ identifier: "depth", direction: "in", dimensions: "1d", type: "float" },
 			],
 			options: {
 				label: "Depth",
@@ -74,7 +77,7 @@ export function setup() {
 
 export function compute(nodeData) {
 	// Set up render data
-	const resolution = [1024, 128];
+	const resolution = STRIP_RESOLUTION
 	// TODO: Reenable retrieval from the node socket when we can encode large arrays as textures instead of uniforms
 	// const timeSeriesData = Node.getInPropertyValue(nodeData, "depth")
 	// const timeSeriesData = Array(resolution[0]).fill(0).map((_, i) => 1 - (Math.cos((i / resolution[0]) * Math.PI * 2) + 1) / 2);

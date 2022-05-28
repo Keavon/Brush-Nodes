@@ -27,11 +27,14 @@ export default async function NodeGraph() {
 		// const gradient = await addNode("Gradient", 50, 50);
 		// const levels = await addNode("Levels", 400, 50);
 
-		const voronoi = await addNode("Voronoi Noise", 50, 50);
+		// const voronoi = await addNode("Voronoi Noise", 50, 50);
 		const slicer = await addNode("Slicer", 400, 50);
+		const gradient1 = await addNode("Gradient", 50, 50);
+		const gradient2 = await addNode("Gradient", 50, 450);
 		const output = await addNode("Output", 800, 50);
 
-		connectWire(voronoi, "pattern", slicer, "sliceable");
+		connectWire(gradient1, "gradient", slicer, "sliceable");
+		connectWire(gradient2, "gradient", slicer, "depth");
 		connectWire(slicer, "streak", output, "diffuse");
 	}
 }
@@ -292,7 +295,7 @@ function graphWheelHandler(event) {
 		graphOffsetY -= (deltaY / graphScale) * zoomFactor;
 	} else {
 		// Shift flips axis
-		if (event.shiftKey){
+		if (event.shiftKey) {
 			graphOffsetX -= (event.deltaY / graphScale) * SCALE_SPEED;
 			graphOffsetY -= (event.deltaX / graphScale) * SCALE_SPEED;
 		} else {
@@ -479,7 +482,7 @@ function updateSelectionOutline(nodeData) {
 	nodeData.selected.style.height = `${bounds.height}px`;
 	nodeData.selected.style.left = `${bounds.left}px`;
 	nodeData.selected.style.top = `${bounds.top}px`;
-	nodeData.selected.style.borderRadius = `${10 * scale}px`;
+	nodeData.selected.style.borderRadius = `${4 * scale}px`;
 }
 
 function updateGraphView() {
