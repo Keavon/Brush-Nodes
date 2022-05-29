@@ -414,7 +414,8 @@ function graphKeydownHandler(event) {
 	}
 
 	if (event.key.toLowerCase() === "backspace" || event.key.toLowerCase() === "delete") {
-		if (document.activeElement.tagName !== "INPUT") removeSelectedNodes();
+		if (event.ctrlKey) localStorage.removeItem(storageKey);
+		else if (document.activeElement.tagName !== "INPUT") removeSelectedNodes();
 	}
 }
 

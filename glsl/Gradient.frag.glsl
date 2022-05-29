@@ -4,6 +4,7 @@ precision mediump float;
 
 uniform ivec2 u_resolution;
 uniform int u_style;
+uniform int u_invert;
 uniform float u_falloff;
 uniform float u_thickness;
 uniform float u_radius;
@@ -53,6 +54,8 @@ void main() {
 	}
 
 	float result = pow(strength, u_falloff);
+
+	if (u_invert == 1) result = 1. - result;
 	
 	Color = vec4(vec3(result), 1);
 }

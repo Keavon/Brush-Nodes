@@ -6,6 +6,7 @@ let program;
 let gl;
 
 const styleList = ["Linear Horizontal", "Linear Vertical", "Bookmatched X", "Bookmatched Y", "Radial"];
+const invertList = ["Not Inverted", "Inverted"];
 
 const definition = {
 	// Defines the node name shown in its header
@@ -18,6 +19,14 @@ const definition = {
 			dimensions: "0d",
 			type: "string",
 			default: "Linear Horizontal",
+			constraints: {},
+		},
+		{
+			identifier: "invert",
+			direction: "in",
+			dimensions: "0d",
+			type: "string",
+			default: invertList[0],
 			constraints: {},
 		},
 		{
@@ -82,6 +91,18 @@ const definition = {
 			},
 		},
 		{
+			name: "invert",
+			type: "Dropdown",
+			connectors: [],
+			options: {
+				label: "Invert",
+				inputBoundIdentifier: "invert",
+			},
+			data: {
+				options: invertList,
+			},
+		},
+		{
 			name: "gradient_falloff",
 			type: "Input",
 			options: {
@@ -138,6 +159,7 @@ export async function compute(nodeData) {
 	const resolution = [512, 512];
 	const uniforms = {
 		u_style: { value: styleList.indexOf(Node.getInPropertyValue(nodeData, "style")), type: "int", vector: false, location: null },
+		u_invert: { value: invertList.indexOf(Node.getInPropertyValue(nodeData, "invert")), type: "int", vector: false, location: null },
 		u_falloff: { value: Node.getInPropertyValue(nodeData, "falloff"), type: "float", vector: false, location: null },
 		u_thickness: { value: Node.getInPropertyValue(nodeData, "thickness"), type: "float", vector: false, location: null },
 		u_radius: { value: Node.getInPropertyValue(nodeData, "radius"), type: "float", vector: false, location: null },
