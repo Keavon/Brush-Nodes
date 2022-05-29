@@ -29,6 +29,10 @@ export default async function NodeGraph() {
 	const previousDocument = localStorage.getItem(storageKey);
 	if (previousDocument) await loadGraph(JSON.parse(previousDocument));
 	else await defaultGraph();
+
+	setTimeout(() => {
+		updateGraphView();
+	}, 0);
 }
 
 export function saveGraph() {
@@ -369,14 +373,12 @@ function graphWheelHandler(event) {
 }
 
 function graphKeydownHandler(event) {
-	if (event.key.toLowerCase() === "a" && event.ctrlKey) {
-		if (document.activeElement.tagName !== "INPUT") {
-			if (event.shiftKey) deselectAllNodes();
-			else selectAllNodes();
+	if (event.key.toLowerCase() === "a" && event.ctrlKey && document.activeElement.tagName !== "INPUT") {
+		if (event.shiftKey) deselectAllNodes();
+		else selectAllNodes();
 
-			event.preventDefault();
-			return;
-		}
+		event.preventDefault();
+		return;
 	}
 
 	if (event.key.toLowerCase() === "g") {

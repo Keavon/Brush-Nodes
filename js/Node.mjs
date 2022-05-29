@@ -222,12 +222,14 @@ export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 }
 
 export async function recomputeProperties(nodeData) {
-	if (nodes[nodeData.name].compute) {
-		await nodes[nodeData.name].compute(nodeData);
-	}
-	else {
-		console.error(`${nodeData.name} node has no compute() function implementation.`);
-	}
+	setTimeout(async () => {
+		if (nodes[nodeData.name].compute) {
+			await nodes[nodeData.name].compute(nodeData);
+		}
+		else {
+			console.error(`${nodeData.name} node has no compute() function implementation.`);
+		}
+	}, 0);
 }
 
 export function detectCycle(nodeData) {
@@ -241,15 +243,17 @@ export function detectCycle(nodeData) {
 
 // Recomputes all downstream nodes, returning true if a cycle was found
 export async function recomputeDownstreamNodes(nodeData) {
-	const depthGroups = findChildNodeDepths(nodeData) || [];
-	const promiseDone = [];
+	setTimeout(async () => {
+		const depthGroups = findChildNodeDepths(nodeData) || [];
+		const promiseDone = [];
 
-	depthGroups.forEach((depthGroup) => {
-		depthGroup.forEach(async (node) => {
-			promiseDone.push(await recomputeProperties(node));
+		depthGroups.forEach((depthGroup) => {
+			depthGroup.forEach(async (node) => {
+				promiseDone.push(await recomputeProperties(node));
+			});
 		});
-	});
-	await Promise.all(promiseDone);
+		await Promise.all(promiseDone);
+	}, 0);
 }
 
 export function findChildNodeDepths(nodeData) {

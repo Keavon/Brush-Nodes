@@ -106,7 +106,6 @@ export async function setup() {
 	gl = NodeShader.createGLContext();
 
 	program = await Shader.createProgram(gl, "Billboard.vert.glsl", "Blend.frag.glsl");
-	return program;
 }
 
 export async function compute(nodeData) {

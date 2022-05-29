@@ -147,8 +147,7 @@ export async function setup() {
 	// Create one WebGl context for this node definition
 	gl = NodeShader.createGLContext();
 
-	program = Shader.createProgram(gl, "Billboard.vert.glsl", "Levels.frag.glsl");
-	return program;
+	program = await Shader.createProgram(gl, "Billboard.vert.glsl", "Levels.frag.glsl");
 }
 
 export async function compute(nodeData) {
