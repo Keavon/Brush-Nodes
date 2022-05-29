@@ -59,7 +59,7 @@ export async function createNode(nodeName, xPlacement, yPlacement, startSelected
 	if (node.setup) await node.setup();
 
 	// Compute all the output values from the inputs
-	recomputeProperties(nodeData);
+	await recomputeProperties(nodeData);
 
 	return nodeData;
 }
@@ -186,7 +186,7 @@ export function setPropertyValue(nodeData, identifier, value) {
 	notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier);
 }
 
-export function setFinalPropertyValueAndPropagate(nodeData, identifier, value) {
+export async function setFinalPropertyValueAndPropagate(nodeData, identifier, value) {
 	const rows = nodes[nodeData.name].getDefinition().rows;
 	const row = rows.find(row => row.options && row.options.inputBoundIdentifier === identifier);
 
@@ -199,10 +199,15 @@ export function setFinalPropertyValueAndPropagate(nodeData, identifier, value) {
 	setPropertyValue(nodeData, identifier, value)
 
 	// Recompute this node with the new input
-	recomputeProperties(nodeData);
+	await recomputeProperties(nodeData);
 
 	// Recompute the whole downstream graph
-	recomputeDownstreamNodes(nodeData);
+	await recomputeDownstreamNodes(nodeData);
+}
+
+export function getBoundIdentifier(nodeData, identifier) {
+	const rows = nodes[nodeData.name].getDefinition().rows;
+	return rows.find(row => row.name === identifier).options.inputBoundIdentifier;
 }
 
 export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
@@ -216,13 +221,15 @@ export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 	}
 }
 
-export function recomputeProperties(nodeData) {
-	if (nodes[nodeData.name].compute) {
-		nodes[nodeData.name].compute(nodeData);
-	}
-	else {
-		console.error(`${nodeData.name} node has no compute() function implementation.`);
-	}
+export async function recomputeProperties(nodeData) {
+	setTimeout(async () => {
+		if (nodes[nodeData.name].compute) {
+			await nodes[nodeData.name].compute(nodeData);
+		}
+		else {
+			console.error(`${nodeData.name} node has no compute() function implementation.`);
+		}
+	}, 0);
 }
 
 export function detectCycle(nodeData) {
@@ -235,13 +242,18 @@ export function detectCycle(nodeData) {
 }
 
 // Recomputes all downstream nodes, returning true if a cycle was found
-export function recomputeDownstreamNodes(nodeData) {
-	const depthGroups = findChildNodeDepths(nodeData) || [];
-	depthGroups.forEach((depthGroup) => {
-		depthGroup.forEach((node) => {
-			recomputeProperties(node);
+export async function recomputeDownstreamNodes(nodeData) {
+	setTimeout(async () => {
+		const depthGroups = findChildNodeDepths(nodeData) || [];
+		const promiseDone = [];
+
+		depthGroups.forEach((depthGroup) => {
+			depthGroup.forEach(async (node) => {
+				promiseDone.push(await recomputeProperties(node));
+			});
 		});
-	});
+		await Promise.all(promiseDone);
+	}, 0);
 }
 
 export function findChildNodeDepths(nodeData) {

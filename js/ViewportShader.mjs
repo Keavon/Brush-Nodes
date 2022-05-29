@@ -190,7 +190,7 @@ function setup3D() {
 		.then((data) => {
 			viewport3D.program = data[0];
 			viewport3D.mesh = data[1];
-			initializeProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh);
+			initializeViewportProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh);
 		});
 }
 
@@ -208,7 +208,7 @@ function setup2D() {
 	return loadingProgram.then((data) => {
 		viewport2D.program = data;
 		viewport2D.mesh = mesh;
-		initializeProgram(gl, viewport2D.program, viewport2D.uniforms, viewport2D.textures, mesh);
+		initializeViewportProgram(gl, viewport2D.program, viewport2D.uniforms, viewport2D.textures, mesh);
 	});
 }
 
@@ -226,7 +226,7 @@ function setupStrip() {
 	return loadingProgram.then((data) => {
 		viewportStrip.program = data;
 		viewportStrip.mesh = mesh;
-		initializeProgram(gl, viewportStrip.program, viewportStrip.uniforms, viewportStrip.textures, mesh);
+		initializeViewportProgram(gl, viewportStrip.program, viewportStrip.uniforms, viewportStrip.textures, mesh);
 	});
 }
 
@@ -282,7 +282,7 @@ function resizeCanvas(gl) {
 	return [gl.canvas.width, gl.canvas.height];
 }
 
-function initializeProgram(gl, program, uniforms, textures, mesh) {
+function initializeViewportProgram(gl, program, uniforms, textures, mesh) {
 	// Prepare the canvas and shader
 	gl.useProgram(program);
 	gl.enable(gl.DEPTH_TEST);

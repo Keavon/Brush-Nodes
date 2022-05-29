@@ -84,18 +84,14 @@ export function getDefinition() {
 	return definition;
 }
 
-export function setup() {
+export async function setup() {
 	// Create one WebGl context for this node definition
 	gl = NodeShader.createGLContext();
 
-	const loadingProgram = Shader.createProgram(gl, "Billboard.vert.glsl", "PerlinNoise.frag.glsl");
-	loadingProgram.then((createdProgram) => {
-		program = createdProgram;
-	});
-	return loadingProgram;
+	program = await Shader.createProgram(gl, "Billboard.vert.glsl", "PerlinNoise.frag.glsl");
 }
 
-export function compute(nodeData) {
+export async function compute(nodeData) {
 	// Prepare new render data
 	const resolution = [512, 512];
 	const uniforms = {
@@ -103,9 +99,9 @@ export function compute(nodeData) {
 		u_seed: { value: Node.getInPropertyValue(nodeData, "seed"), type: "int", vector: false, location: null },
 	};
 
-	NodeShader.initializeProgram(gl, program, resolution, uniforms);
-	const framebuffer = NodeShader.renderToTexture(gl, program, resolution, uniforms);
-	NodeShader.composite(gl, program, resolution, uniforms);
+	NodeShader.initializeProgram(gl, await program, resolution, uniforms);
+	const framebuffer = NodeShader.renderToTexture(gl, await program, resolution, uniforms);
+	NodeShader.composite(gl, await program, resolution, uniforms);
 	const image = NodeShader.readRenderedTexture(gl, framebuffer, resolution);
 
 	Node.setPropertyValue(nodeData, "pattern", image);

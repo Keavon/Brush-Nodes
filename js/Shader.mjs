@@ -1,16 +1,13 @@
-export function createProgram(gl, vertexShaderPath, fragmentShaderPath) {
+export async function createProgram(gl, vertexShaderPath, fragmentShaderPath) {
 	const relativePrefix = "/Materialism/glsl/";
 	const vertexShaderSource = fetch(relativePrefix + vertexShaderPath).then(response => response.text());
 	const fragmentShaderSource = fetch(relativePrefix + fragmentShaderPath).then(response => response.text());
-	
-	return Promise
-		.all([vertexShaderSource, fragmentShaderSource])
-		.then((sources) => {
-			const vertexShader = compileShader(gl, gl.VERTEX_SHADER, sources[0]);
-			const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, sources[1]);
-			const program = linkProgram(gl, vertexShader, fragmentShader);
-			return program;
-		});
+	const [vert, frag] = await Promise.all([vertexShaderSource, fragmentShaderSource]);
+
+	const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vert);
+	const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, frag);
+	const program = linkProgram(gl, vertexShader, fragmentShader);
+	return program;
 }
 
 /**
@@ -24,7 +21,7 @@ function compileShader(gl, shaderType, shaderSource) {
 	const shader = gl.createShader(shaderType);
 	gl.shaderSource(shader, shaderSource);
 	gl.compileShader(shader);
-	
+
 	const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
 	if (success) return shader;
 
