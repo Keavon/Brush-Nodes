@@ -5,6 +5,7 @@ import * as Node_Blend from "/Materialism/nodes/Blend.mjs";
 import * as Node_Levels from "/Materialism/nodes/Levels.mjs";
 import * as Node_Slicer from "/Materialism/nodes/Slicer.mjs";
 import * as Node_Color from "/Materialism/nodes/Color.mjs";
+import * as Node_Input from "/Materialism/nodes/Input.mjs";
 import * as Node_Output from "/Materialism/nodes/Output.mjs";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
@@ -14,6 +15,7 @@ const nodes = {
 	"Levels": Node_Levels,
 	"Slicer": Node_Slicer,
 	"Color": Node_Color,
+	"Input": Node_Input,
 	"Output": Node_Output,
 };
 

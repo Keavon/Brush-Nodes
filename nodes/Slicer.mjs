@@ -37,7 +37,6 @@ const definition = {
 			name: "streak_thumbnail",
 			type: "Thumbnail",
 			connectors: [
-				{ identifier: "sliceable", direction: "in", dimensions: "2d", type: "color" },
 				{ identifier: "streak", direction: "out", dimensions: "2d", type: "color" },
 			],
 			options: {
@@ -46,7 +45,19 @@ const definition = {
 		},
 		{ type: "Spacer" },
 		{
-			name: "slice_depth",
+			name: "sliceable_texture",
+			type: "Label",
+			connectors: [
+				{ identifier: "sliceable", direction: "in", dimensions: "2d", type: "color" },
+			],
+			options: {
+				label: "Sliceable",
+				inputBoundIdentifier: "sliceable",
+			},
+			data: {},
+		},
+		{
+			name: "depth_values",
 			type: "Label",
 			connectors: [
 				{ identifier: "depth", direction: "in", dimensions: "1d", type: "float" },

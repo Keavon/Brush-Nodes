@@ -89,15 +89,20 @@ async function defaultGraph() {
 	// const perlin = await addNode("Perlin Noise", 50, 50);
 	// const gradient = await addNode("Gradient", 50, 50);
 	// const levels = await addNode("Levels", 400, 50);
-
 	// const voronoi = await addNode("Voronoi Noise", 50, 50);
-	const slicer = await addNode("Slicer", 400, 50);
-	const gradient1 = await addNode("Gradient", 50, 50);
-	const gradient2 = await addNode("Gradient", 50, 450);
-	const output = await addNode("Output", 800, 50);
+	// const blend = await addNode("Blend", 50, 50);
 
-	await connectWire(gradient1, "gradient", slicer, "sliceable");
-	await connectWire(gradient2, "gradient", slicer, "depth");
+	const input = await addNode("Input", 50, 50);
+	const slicer = await addNode("Slicer", 800, 50);
+	const gradient1 = await addNode("Gradient", 50, 350);
+	const gradient2 = await addNode("Gradient", 50, 800);
+	const blend = await addNode("Blend", 400, 600);
+	const output = await addNode("Output", 1200, 50);
+
+	await connectWire(input, "pressure", slicer, "depth");
+	await connectWire(gradient1, "gradient", blend, "foreground");
+	await connectWire(gradient2, "gradient", blend, "background");
+	await connectWire(blend, "composite", slicer, "sliceable");
 	await connectWire(slicer, "streak", output, "diffuse");
 }
 

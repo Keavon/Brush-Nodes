@@ -3,8 +3,11 @@ export function getPropertyValue(nodeData, identifier, definition) {
 }
 
 export function createWidget(nodeData, row) {
+	const identifier = row.options.outputBoundIdentifier;
+
 	const canvasElement = document.createElement("canvas");
 	canvasElement.classList.add("thumbnail");
+	canvasElement.dataset.identifier = identifier;
 	return canvasElement;
 }
 
@@ -20,7 +23,7 @@ export function propertyValueWasUpdated(nodeData, row) {
 		canvas.height = image.resolution[1];
 	}
 	else {
-		const canvas = nodeData.element.querySelector("canvas");
+		const canvas = nodeData.element.querySelector(`canvas[data-identifier=${identifier}]`);
 		context = canvas.getContext("2d");
 		canvas.width = image.resolution[0];
 		canvas.height = image.resolution[1];
