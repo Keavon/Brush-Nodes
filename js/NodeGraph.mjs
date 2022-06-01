@@ -16,7 +16,6 @@ let awaitingGraphViewUpdate = false;
 let graphOffsetX = 0;
 let graphOffsetY = 0;
 let graphScale = 1;
-const scaleSpeed = 0.1;
 
 const storageKey = "save_document";
 
@@ -329,15 +328,15 @@ function graphClickHandler(event) {
 
 function graphWheelHandler(event) {
 	const minScale = 0.1;
-	const maxScale = 2.0;
+	const maxScale = 6.0;
 	const SCALE_SPEED = 0.5;
 	const WHEEL_RATE = 1 / 600;
 
 	if (event.ctrlKey) {
-		// Prevent the default browser zoom behaviour
+		// Prevent the default browser zoom behavior
 		event.preventDefault();
 
-		// Caclulate a zoom factor as a scalar multiplier of the current zoom
+		// Calculate a zoom factor as a scalar multiplier of the current zoom
 		const scroll = event.deltaY;
 		let zoomFactor = 1 + Math.abs(scroll) * WHEEL_RATE;
 		if (scroll > 0) zoomFactor = 1 / zoomFactor;
@@ -405,9 +404,9 @@ function graphKeydownHandler(event) {
 		addNode("Slicer");
 	}
 
-	if (event.key.toLowerCase() === "c") {
-		if (!event.ctrlKey && !event.shiftKey) addNode("Color");
-	}
+	// if (event.key.toLowerCase() === "c") {
+	// 	if (!event.ctrlKey && !event.shiftKey) addNode("Color");
+	// }
 
 	if (event.key.toLowerCase() === "enter" && document.activeElement.closest("input")) {
 		document.activeElement.closest("input").blur();
@@ -570,6 +569,8 @@ function updateGraphView() {
 	}
 	awaitingGraphViewUpdate = true;
 }
+// Hacky quick solution, exporting this normally causes an infinite loop
+window.updateGraphView = updateGraphView;
 
 function updateNodePosition(nodeData) {
 	nodeData.element.style.transform = `scale(${graphScale}) translate(${nodeData.x + graphOffsetX}px, ${nodeData.y + graphOffsetY}px)`;

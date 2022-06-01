@@ -4,6 +4,7 @@ precision mediump float;
 
 uniform ivec2 u_resolution;
 uniform int u_style;
+uniform int u_invert;
 uniform float u_scale;
 uniform float u_jitter;
 
@@ -97,7 +98,8 @@ void main() {
 	int x = int(floor(v_uvCoordinates.x * float(u_resolution.x) + 0.5));
 	int y = int(floor(v_uvCoordinates.y * float(u_resolution.y) + 0.5));
 
-	vec2 f1AndF2 = cellular(v_uvCoordinates * u_scale);
+	float aspectRatio = float(u_resolution.x) / float(u_resolution.y);
+	vec2 f1AndF2 = cellular(v_uvCoordinates * u_scale * vec2(aspectRatio, 1.));
 	float f1 = f1AndF2.x;
 	float f2 = f1AndF2.y;
 
@@ -124,7 +126,7 @@ void main() {
 		case 6: // Multilog
 			result = log(f1) * log(f2);
 			break;
-		case 7: // Scatter
+		case 7: // Caustics
 			result = log(log(f1) * log(f2));
 			break;
 		default:
@@ -132,5 +134,6 @@ void main() {
 			return;
 	}
 
+	if (u_invert == 1) result = 1. - result;
 	Color = vec4(result, result, result, 1);
 }

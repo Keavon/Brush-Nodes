@@ -46,14 +46,14 @@ void main() {
 			float xOffset = (x - 0.5) * 2.;
 			float yOffset = (y - 0.5) * 2.;
 			float hypotenuse = sqrt(xOffset * xOffset + yOffset * yOffset);
-			strength = remap(hypotenuse, max(0., u_radius - u_thickness), u_radius, 0.0, 1.0);
+			strength = 1. - remap(hypotenuse, max(0., u_radius - u_thickness), u_radius, 0.0, 1.0);
 			break;
 		default:
 			Color = vec4(1., 0., 0., 1.);
 			return;
 	}
 
-	float result = pow(strength, u_falloff);
+	float result = pow(1. - strength, u_falloff);
 
 	if (u_invert == 1) result = 1. - result;
 	

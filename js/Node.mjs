@@ -32,6 +32,19 @@ const widgets = {
 	"Output": Widget_Output,
 };
 
+export const SQUARE_RESOLUTION = [512, 512];
+export const STRIP_RESOLUTION = [2048, 128];
+export const formFactorResolutions = {
+	"Square": SQUARE_RESOLUTION,
+	"Strip": STRIP_RESOLUTION,
+}
+export const formFactorList = Object.keys(formFactorResolutions);
+export function formFactorFromResolution(resolution) {
+	const pairs = Object.entries(formFactorResolutions);
+	const match = pairs.find(([_, res]) => res[0] === resolution[0] && res[1] === resolution[1]);
+	return match[0];
+}
+
 export async function createNode(nodeName, xPlacement, yPlacement, startSelected) {
 	// Get the definition object for the chosen node type
 	const node = nodes[nodeName];
@@ -225,6 +238,7 @@ export async function recomputeProperties(nodeData) {
 	setTimeout(async () => {
 		if (nodes[nodeData.name].compute) {
 			await nodes[nodeData.name].compute(nodeData);
+			window?.updateGraphView();
 		}
 		else {
 			console.error(`${nodeData.name} node has no compute() function implementation.`);

@@ -151,8 +151,13 @@ export async function setup() {
 }
 
 export async function compute(nodeData) {
+	const inputTexture = nodeData.inConnections.input_texture[0];
+	const inputTextureIdentifier = inputTexture?.identifier;
+	const inputTextureResolution = inputTexture?.node.propertyValues[inputTextureIdentifier]?.resolution;
+	const inputTextureFF = inputTextureResolution ? Node.formFactorFromResolution(inputTextureResolution) : Node.formFactorList[0];
+
 	// Set up render data
-	const resolution = [512, 512];
+	const resolution = Node.formFactorResolutions[inputTextureFF];
 	const uniforms = {
 		u_shadows: { value: Node.getInPropertyValue(nodeData, "shadows"), type: "float", vector: false, location: null },
 		u_midtones: { value: Node.getInPropertyValue(nodeData, "midtones"), type: "float", vector: false, location: null },

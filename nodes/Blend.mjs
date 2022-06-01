@@ -16,88 +16,88 @@ let gl;
 
 const blendModeList = ["Normal", "Dissolve", "Multiply", "Screen", "Add (Linear Dodge)", "Overlay", "Subtract"];
 
-const definition = {
-	name: "Blend",
-	properties: [
-		{
-			identifier: "foreground",
-			direction: "in",
-			dimensions: "2d",
-			type: "color",
-			constraints: {},
-		},
-		{
-			identifier: "background",
-			direction: "in",
-			dimensions: "2d",
-			type: "color",
-			constraints: {},
-		},
-		{
-			identifier: "mode",
-			direction: "in",
-			dimensions: "0d",
-			type: "string",
-			default: "Normal",
-			constraints: {},
-		},
-		{
-			identifier: "opacity",
-			direction: "in",
-			dimensions: "2d",
-			type: "color",
-			default: 0.5,
-			constraints: { min: 0, max: 1 }
-		},
-		{
-			identifier: "composite",
-			direction: "out",
-			dimensions: "2d",
-			type: "color",
-		},
-	],
-	rows: [
-		{
-			name: "composite_thumbnail",
-			type: "Thumbnail",
-			connectors: [
-				{ identifier: "foreground", direction: "in", dimensions: "2d", type: "color" },
-				{ identifier: "background", direction: "in", dimensions: "2d", type: "color" },
-				{ identifier: "composite", direction: "out", dimensions: "2d", type: "color" },
-			],
-			options: {
-				outputBoundIdentifier: "composite",
-			},
-		},
-		{ type: "Spacer" },
-		{
-			name: "blend_mode",
-			type: "Dropdown",
-			connectors: [],
-			options: {
-				label: "Blend Mode",
-				inputBoundIdentifier: "mode",
-			},
-			data: {
-				options: blendModeList,
-			},
-		},
-		{
-			name: "opacity_mask",
-			type: "Input",
-			connectors: [
-				{ identifier: "opacity", direction: "in", dimensions: "2d", type: "color" },
-			],
-			options: {
-				label: "Opacity",
-				inputBoundIdentifier: "opacity",
-			},
-			data: {},
-		},
-	],
-};
-
 export function getDefinition() {
+	const definition = {
+		name: "Blend",
+		properties: [
+			{
+				identifier: "foreground",
+				direction: "in",
+				dimensions: "2d",
+				type: "color",
+				constraints: {},
+			},
+			{
+				identifier: "background",
+				direction: "in",
+				dimensions: "2d",
+				type: "color",
+				constraints: {},
+			},
+			{
+				identifier: "mode",
+				direction: "in",
+				dimensions: "0d",
+				type: "string",
+				default: "Normal",
+				constraints: {},
+			},
+			{
+				identifier: "opacity",
+				direction: "in",
+				dimensions: "2d",
+				type: "color",
+				default: 0.5,
+				constraints: { min: 0, max: 1 }
+			},
+			{
+				identifier: "composite",
+				direction: "out",
+				dimensions: "2d",
+				type: "color",
+			},
+		],
+		rows: [
+			{
+				name: "composite_thumbnail",
+				type: "Thumbnail",
+				connectors: [
+					{ identifier: "foreground", direction: "in", dimensions: "2d", type: "color" },
+					{ identifier: "background", direction: "in", dimensions: "2d", type: "color" },
+					{ identifier: "composite", direction: "out", dimensions: "2d", type: "color" },
+				],
+				options: {
+					outputBoundIdentifier: "composite",
+				},
+			},
+			{ type: "Spacer" },
+			{
+				name: "blend_mode",
+				type: "Dropdown",
+				connectors: [],
+				options: {
+					label: "Blend Mode",
+					inputBoundIdentifier: "mode",
+				},
+				data: {
+					options: blendModeList,
+				},
+			},
+			{
+				name: "opacity_mask",
+				type: "Input",
+				connectors: [
+					{ identifier: "opacity", direction: "in", dimensions: "2d", type: "color" },
+				],
+				options: {
+					label: "Opacity",
+					inputBoundIdentifier: "opacity",
+				},
+				data: {},
+			},
+		],
+	};
+
 	return definition;
 }
 
@@ -109,8 +109,23 @@ export async function setup() {
 }
 
 export async function compute(nodeData) {
+	const background = nodeData.inConnections.background[0];
+	const foreground = nodeData.inConnections.foreground[0];
+	const backgroundIdentifier = background?.identifier;
+	const foregroundIdentifier = foreground?.identifier;
+	const backgroundResolution = background?.node.propertyValues[backgroundIdentifier]?.resolution;
+	const foregroundResolution = foreground?.node.propertyValues[foregroundIdentifier]?.resolution;
+	const backgroundFF = backgroundResolution ? Node.formFactorFromResolution(backgroundResolution) : Node.formFactorList[0];
+	const foregroundFF = foregroundResolution ? Node.formFactorFromResolution(foregroundResolution) : Node.formFactorList[0];
+
+	// If either is a strip, both are a strip
+	let ff = Node.formFactorList[0];
+	if (backgroundFF === Node.formFactorList[1] || foregroundFF === Node.formFactorList[1]) {
+		ff = Node.formFactorList[1];
+	}
+
 	// Set up render data
-	const resolution = [512, 512];
+	const resolution = Node.formFactorResolutions[ff];
 	const uniforms = {
 		u_mode: { value: blendModeList.indexOf(Node.getInPropertyValue(nodeData, "mode")), type: "int", vector: false, location: null },
 		u_opacity: { value: Node.getInPropertyValue(nodeData, "opacity"), type: "float", vector: false, location: null },

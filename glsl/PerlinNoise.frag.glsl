@@ -85,14 +85,15 @@ float pnoise(vec2 P, vec2 rep, int seed) {
 
 void main() {
 	// gl_FragColor = vec4(v_uvCoordinates.xy, 0, 1);
-	int x = int(floor(v_uvCoordinates.x * float(u_resolution.x) + 0.5));
-	int y = int(floor(v_uvCoordinates.y * float(u_resolution.y) + 0.5));
-	
+	// int x = int(floor(v_uvCoordinates.x * float(u_resolution.x) + 0.5));
+	// int y = int(floor(v_uvCoordinates.y * float(u_resolution.y) + 0.5));
+
 	// bool evenOdd = mod(float(x + y), 2.0) == 0.0;
 	
 	// if (evenOdd) gl_FragColor = vec4(v_uvCoordinates.xy, 1, 1);
 	// else gl_FragColor = vec4(0, 0, 0, 1);
 	
-	float noiseAtFragment = pnoise(v_uvCoordinates * u_scale, vec2(u_scale, u_scale), u_seed);
+	float aspectRatio = float(u_resolution.x) / float(u_resolution.y);
+	float noiseAtFragment = pnoise(v_uvCoordinates * u_scale * vec2(aspectRatio, 1.), vec2(u_scale, u_scale), u_seed);
 	Color = vec4(noiseAtFragment, noiseAtFragment, noiseAtFragment, 1);
 }
