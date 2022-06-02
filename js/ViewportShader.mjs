@@ -18,6 +18,10 @@ viewportStrip.program = null;
 
 // Meshes
 viewport3D.mesh = null;
+let planeMesh = null;
+let strokeMesh = null;
+
+let spinning = true;
 
 // Uniforms
 viewport3D.uniforms = {
@@ -68,7 +72,8 @@ function transformView() {
 	const radius = 2.5;
 	const height = 1;
 	const eye = [Math.sin(time) * radius, height, Math.cos(time) * radius];
-	let matrix = Mat4.lookAt(eye, [0, 0, 0]);
+	const eyeAbove = [0.01, 5, 0.01];
+	let matrix = Mat4.lookAt(spinning ? eye : eyeAbove, [0, 0, 0]);
 	return matrix;
 }
 
@@ -79,8 +84,8 @@ function transformProj() {
 	return Mat4.perspective(fov, aspectRatio, 0.1, 100);
 }
 
-function loadMesh() {
-	const mesh = { quad: "/Brush-Nodes/models/plane.obj" };
+function loadMesh(path) {
+	const mesh = { quad: path };
 
 	return new Promise((resolve, reject) => {
 		OBJ.downloadMeshes(mesh, (loadedMesh) => resolve(loadedMesh.quad));
@@ -188,15 +193,29 @@ function setup3D() {
 	const gl = viewport3D.canvas.getContext("webgl2");
 
 	const loadingProgram = Shader.createProgram(gl, "Viewport3D.vert.glsl", "Viewport3D.frag.glsl");
-	const loadingMesh = loadMesh();
+	const loadingPlaneMesh = loadMesh("/Brush-Nodes/models/plane.obj");
+	const loadingStrokeMesh = loadMesh("/Brush-Nodes/models/stroke.obj");
 
 	return Promise
-		.all([loadingProgram, loadingMesh])
-		.then((data) => {
-			viewport3D.program = data[0];
-			viewport3D.mesh = data[1];
-			initializeViewportProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh);
+		.all([loadingProgram, loadingPlaneMesh, loadingStrokeMesh])
+		.then(([program, plane, stroke]) => {
+			viewport3D.program = program;
+
+			planeMesh = plane;
+			strokeMesh = stroke;
+
+			set3DProgramMesh("Plane");
 		});
+}
+
+export function set3DProgramMesh(meshName) {
+	const gl = viewport3D.canvas.getContext("webgl2");
+
+	viewport3D.mesh = { "Plane": planeMesh, "Stroke": strokeMesh }[meshName];
+	console.log(viewport3D.mesh);
+	initializeViewportProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh);
+
+	spinning = meshName === "Plane";
 }
 
 function setup2D() {
@@ -246,7 +265,7 @@ function render3D() {
 	viewport3D.uniforms["u_proj"].value = transformProj();
 
 	// Render the canvas
-	draw(gl, viewport3D);
+	draw(gl, viewport3D, [1, 1, 1, 1]);
 
 	// Run again next frame
 	requestAnimationFrame(render3D);
@@ -260,7 +279,7 @@ function render2D() {
 	viewport2D.uniforms["u_resolution"].value = resizeCanvas(gl);
 
 	// Render the canvas
-	draw(gl, viewport2D);
+	draw(gl, viewport2D, [1, 1, 1, 1]);
 
 	// Run again next frame
 	requestAnimationFrame(render2D);
@@ -290,7 +309,9 @@ function resizeCanvas(gl) {
 function initializeViewportProgram(gl, program, uniforms, textures, mesh) {
 	// Prepare the canvas and shader
 	gl.useProgram(program);
-	gl.enable(gl.DEPTH_TEST);
+	gl.disable(gl.DEPTH_TEST);
+	gl.enable(gl.BLEND);
+	gl.blendEquation(gl.MIN);
 
 	// Locate uniforms
 	Object.keys(uniforms).forEach((uniformName) => {

@@ -86,14 +86,30 @@ export function compute(nodeData) {
 	const inputDisplacement = nodeData.inConnections.displacement[0];
 	const inputTextureIdentifier = inputTexture?.identifier;
 	const inputTextureResolution = inputTexture?.node.propertyValues[inputTextureIdentifier]?.resolution;
-	const inputTextureFF = inputTextureResolution && Node.formFactorFromResolution(inputTextureResolution);
-
-	const ff = inputDisplacement ? "Square" : inputTextureFF;
-
-	document.querySelector(".column.right").style.display = ff === "Square" ? "" : "none";
-	document.querySelector(".brush-viewport").style.display = ff === "Strip" ? "" : "none";
+	const colorFF = inputTextureResolution && Node.formFactorFromResolution(inputTextureResolution);
 
 	const viewport3DClasses = document.querySelector(".material-viewports").classList;
-	if (inputDisplacement) viewport3DClasses.remove("viewport-2d-only");
-	else viewport3DClasses.add("viewport-2d-only");
+	viewport3DClasses.remove("viewport-2d-only");
+	viewport3DClasses.remove("viewport-3d-only");
+	viewport3DClasses.remove("short");
+
+	if (colorFF === "Square") {
+		document.querySelector(".material-viewports").style.display = "";
+		document.querySelector(".viewport-strip").style.display = "none";
+		ViewportShader.set3DProgramMesh("Plane");
+		if (!inputDisplacement) {
+			viewport3DClasses.add("viewport-2d-only");
+		}
+	}
+	else if (colorFF === "Strip") {
+		document.querySelector(".material-viewports").style.display = "";
+		document.querySelector(".viewport-strip").style.display = "";
+		viewport3DClasses.add("viewport-3d-only");
+		viewport3DClasses.add("short");
+		ViewportShader.set3DProgramMesh("Stroke");
+	}
+	else {
+		document.querySelector(".material-viewports").style.display = "none";
+		document.querySelector(".viewport-strip").style.display = "none";
+	}
 }

@@ -9,20 +9,8 @@ body {
 	font-size: 0;
 	overscroll-behavior: none;
 	display: flex;
-}
 
-.column {
-	display: flex;
-	flex-direction: column;
-}
-
-.column.left {
-	flex: 1 1 auto;
-	width: 100%;
-}
-
-.column.right {
-	width: 25%;
+	--brush-strip-height: 200px;
 }
 
 .node-graph {
@@ -46,14 +34,31 @@ body {
 	text-align: center;
 }
 
-.brush-viewport canvas {
+.viewport-strip {
+	height: auto;
+	position: absolute;
+	bottom: 0;
 	width: 100%;
-	height: 200px;
+}
+
+.viewport-strip canvas {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: var(--brush-strip-height);
 }
 
 .material-viewports {
-	height: 100%;
 	display: inline-block;
+	position: absolute;
+	width: 25%;
+	height: 100%;
+	right: 0;
+	top: 0;
+}
+
+.material-viewports.short {
+	height: calc(100% - var(--brush-strip-height));
 }
 
 .material-viewports.viewport-2d-only .viewport-3d {
@@ -61,6 +66,14 @@ body {
 }
 
 .material-viewports.viewport-2d-only .viewport-2d {
+	height: 100%;
+}
+
+.material-viewports.viewport-3d-only .viewport-2d {
+	display: none;
+}
+
+.material-viewports.viewport-3d-only .viewport-3d {
 	height: 100%;
 }
 

@@ -60,7 +60,6 @@ export function saveGraph() {
 	});
 
 	const data = { nodes, connections };
-	console.info("Saving graph", data);
 	localStorage[storageKey] = JSON.stringify(data);
 }
 
