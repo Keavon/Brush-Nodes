@@ -10,6 +10,7 @@ uniform mat4 u_view;
 uniform mat4 u_proj;
 uniform sampler2D u_displacement;
 uniform int u_displacementExists;
+uniform float u_displacementScale;
 
 out vec2 v_uvCoordinates;
 out vec3 v_normalVectors;
@@ -23,6 +24,6 @@ void main() {
 	v_normalVectors = a_normalVectors;
 
 	vec4 point = vec4(a_vertexCoordinates.xyz, 1);
-	if (u_displacementExists == 1) point.y += (texture(u_displacement, v_uvCoordinates).r - 0.5) * 0.2;
+	if (u_displacementExists == 1) point.y += (texture(u_displacement, v_uvCoordinates).r - 0.5) * 0.2 * u_displacementScale;
 	gl_Position = u_proj * u_view * u_model * point;
 }

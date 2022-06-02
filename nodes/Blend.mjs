@@ -86,9 +86,7 @@ export function getDefinition() {
 			{
 				name: "opacity_mask",
 				type: "Input",
-				connectors: [
-					{ identifier: "opacity", direction: "in", dimensions: "2d", type: "color" },
-				],
+				connectors: [],
 				options: {
 					label: "Opacity",
 					inputBoundIdentifier: "opacity",

@@ -59,7 +59,7 @@ export function getDefinition() {
 				type: "Thumbnail",
 				// List of any connector dots hosted on the input and output sides of the row
 				connectors: [
-					{ identifier: "pressure", direction: "out", dimensions: "1d", type: "float" },
+					{ identifier: "pressure", direction: "out", dimensions: "2d", type: "color" },
 				],
 				// Option specific to the widget type
 				options: {
@@ -77,7 +77,7 @@ export function getDefinition() {
 				type: "Thumbnail",
 				// List of any connector dots hosted on the input and output sides of the row
 				connectors: [
-					{ identifier: "altitude", direction: "out", dimensions: "1d", type: "float" },
+					{ identifier: "altitude", direction: "out", dimensions: "2d", type: "color" },
 				],
 				// Option specific to the widget type
 				options: {
@@ -95,7 +95,7 @@ export function getDefinition() {
 				type: "Thumbnail",
 				// List of any connector dots hosted on the input and output sides of the row
 				connectors: [
-					{ identifier: "azimuth", direction: "out", dimensions: "1d", type: "float" },
+					{ identifier: "azimuth", direction: "out", dimensions: "2d", type: "color" },
 				],
 				// Option specific to the widget type
 				options: {
@@ -113,7 +113,7 @@ export function getDefinition() {
 				type: "Thumbnail",
 				// List of any connector dots hosted on the input and output sides of the row
 				connectors: [
-					{ identifier: "x", direction: "out", dimensions: "1d", type: "float" },
+					{ identifier: "x", direction: "out", dimensions: "2d", type: "color" },
 				],
 				// Option specific to the widget type
 				options: {
@@ -131,7 +131,7 @@ export function getDefinition() {
 				type: "Thumbnail",
 				// List of any connector dots hosted on the input and output sides of the row
 				connectors: [
-					{ identifier: "y", direction: "out", dimensions: "1d", type: "float" },
+					{ identifier: "y", direction: "out", dimensions: "2d", type: "color" },
 				],
 				// Option specific to the widget type
 				options: {

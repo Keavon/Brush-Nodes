@@ -25,5 +25,5 @@ void main() {
 
 	v_uvCoordinates = a_uvCoordinates;
 	v_normalVectors = a_normalVectors;
-	gl_Position = vec4(a_vertexCoordinates.x * xScale * subscale, a_vertexCoordinates.y * yScale * subscale, 0, 1);
+	gl_Position = vec4(a_vertexCoordinates.x * xScale * subscale, -a_vertexCoordinates.y * yScale * subscale, 0, 1);
 }

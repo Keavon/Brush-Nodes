@@ -21,7 +21,7 @@ const definition = {
 		{
 			identifier: "depth",
 			direction: "in",
-			dimensions: "1d",
+			dimensions: "2d",
 			type: "color",
 			constraints: {}
 		},
@@ -60,10 +60,10 @@ const definition = {
 			name: "depth_values",
 			type: "Label",
 			connectors: [
-				{ identifier: "depth", direction: "in", dimensions: "1d", type: "float" },
+				{ identifier: "depth", direction: "in", dimensions: "2d", type: "color" },
 			],
 			options: {
-				label: "Depth",
+				label: "Slice Column Depth",
 				inputBoundIdentifier: "depth",
 			},
 			data: {},

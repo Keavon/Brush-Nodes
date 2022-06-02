@@ -124,17 +124,13 @@ export function getDefinition() {
 					// Tells the input what in property identifier feed with its value
 					inputBoundIdentifier: "scale",
 				},
-				connectors: [
-					{ identifier: "scale", direction: "in", dimensions: "0d", type: "float" },
-				],
+				connectors: [],
 				data: {},
 			},
 			{
 				name: "voronoi_noise_jitter",
 				type: "Input",
-				connectors: [
-					{ identifier: "jitter", direction: "in", dimensions: "0d", type: "float" },
-				],
+				connectors: [],
 				options: {
 					label: "Jitter",
 					inputBoundIdentifier: "jitter",

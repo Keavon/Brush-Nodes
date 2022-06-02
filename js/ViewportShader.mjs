@@ -27,6 +27,7 @@ viewport3D.uniforms = {
 	u_proj: { value: null, type: "matrix", location: null },
 	u_diffuseExists: { value: null, type: "bool", vector: false, location: null },
 	u_displacementExists: { value: null, type: "bool", vector: false, location: null },
+	u_displacementScale: { value: null, type: "float", vector: false, location: null },
 };
 viewport2D.uniforms = {
 	u_resolution: { value: null, type: "int", vector: true, location: null },
@@ -84,6 +85,10 @@ function loadMesh() {
 	return new Promise((resolve, reject) => {
 		OBJ.downloadMeshes(mesh, (loadedMesh) => resolve(loadedMesh.quad));
 	});
+}
+
+export function updateDisplacementScale(displacementScale) {
+	viewport3D.uniforms.u_displacementScale.value = displacementScale;
 }
 
 export function updateImage(textureUniformName, image) {

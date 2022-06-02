@@ -38,9 +38,7 @@ const definition = {
 		{
 			name: "color_picker",
 			type: "Input",
-			connectors: [
-				{ identifier: "rgba", direction: "in", dimensions: "0d", type: "string" },
-			],
+			connectors: [],
 			options: {
 				label: "Color",
 				inputBoundIdentifier: "rgba",

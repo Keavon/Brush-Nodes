@@ -132,17 +132,13 @@ export function getDefinition() {
 					// Tells the input what in property identifier feed with its value
 					inputBoundIdentifier: "falloff",
 				},
-				connectors: [
-					{ identifier: "falloff", direction: "in", dimensions: "0d", type: "float" },
-				],
+				connectors: [],
 				data: {},
 			},
 			{
 				name: "gradient_thickness",
 				type: "Input",
-				connectors: [
-					{ identifier: "thickness", direction: "in", dimensions: "0d", type: "float" },
-				],
+				connectors: [],
 				options: {
 					label: "Thickness",
 					inputBoundIdentifier: "thickness",
@@ -152,9 +148,7 @@ export function getDefinition() {
 			{
 				name: "gradient_radius",
 				type: "Input",
-				connectors: [
-					{ identifier: "radius", direction: "in", dimensions: "0d", type: "float" },
-				],
+				connectors: [],
 				options: {
 					label: "Outer Radius",
 					inputBoundIdentifier: "radius",

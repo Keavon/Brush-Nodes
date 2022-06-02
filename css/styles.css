@@ -56,6 +56,14 @@ body {
 	display: inline-block;
 }
 
+.material-viewports.viewport-2d-only .viewport-3d {
+	display: none;
+}
+
+.material-viewports.viewport-2d-only .viewport-2d {
+	height: 100%;
+}
+
 .material-viewports .viewport-3d,
 .material-viewports .viewport-2d {
 	width: 100%;

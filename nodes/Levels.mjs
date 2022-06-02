@@ -78,9 +78,7 @@ const definition = {
 		{
 			name: "input_shadows",
 			type: "Input",
-			connectors: [
-				{ identifier: "shadows", direction: "in", dimensions: "0d", type: "float" },
-			],
+			connectors: [],
 			options: {
 				label: "Shadows",
 				inputBoundIdentifier: "shadows",
@@ -90,9 +88,7 @@ const definition = {
 		{
 			name: "input_midtones",
 			type: "Input",
-			connectors: [
-				{ identifier: "midtones", direction: "in", dimensions: "0d", type: "float" },
-			],
+			connectors: [],
 			options: {
 				label: "Midtones (Interp Factor)",
 				inputBoundIdentifier: "midtones",
@@ -102,9 +98,7 @@ const definition = {
 		{
 			name: "input_highlights",
 			type: "Input",
-			connectors: [
-				{ identifier: "highlights", direction: "in", dimensions: "0d", type: "float" },
-			],
+			connectors: [],
 			options: {
 				label: "Highlights",
 				inputBoundIdentifier: "highlights",
@@ -115,9 +109,7 @@ const definition = {
 		{
 			name: "output_minimums",
 			type: "Input",
-			connectors: [
-				{ identifier: "minimums", direction: "in", dimensions: "0d", type: "float" },
-			],
+			connectors: [],
 			options: {
 				label: "Minimums",
 				inputBoundIdentifier: "minimums",
@@ -127,9 +119,7 @@ const definition = {
 		{
 			name: "output_maximums",
 			type: "Input",
-			connectors: [
-				{ identifier: "maximums", direction: "in", dimensions: "0d", type: "float" },
-			],
+			connectors: [],
 			options: {
 				label: "Maximums",
 				inputBoundIdentifier: "maximums",

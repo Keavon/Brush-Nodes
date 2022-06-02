@@ -81,17 +81,13 @@ export function getDefinition() {
 					// Tells the input what in property identifier feed with its value
 					inputBoundIdentifier: "scale",
 				},
-				connectors: [
-					{ identifier: "scale", direction: "in", dimensions: "0d", type: "float" },
-				],
+				connectors: [],
 				data: {},
 			},
 			{
 				name: "random_seed",
 				type: "Input",
-				connectors: [
-					{ identifier: "seed", direction: "in", dimensions: "0d", type: "int" },
-				],
+				connectors: [],
 				options: {
 					label: "Seed",
 					inputBoundIdentifier: "seed",

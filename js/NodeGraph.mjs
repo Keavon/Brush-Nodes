@@ -92,18 +92,22 @@ async function defaultGraph() {
 	// const voronoi = await addNode("Voronoi Noise", 50, 50);
 	// const blend = await addNode("Blend", 50, 50);
 
-	const input = await addNode("Input", 50, 50);
-	const slicer = await addNode("Slicer", 800, 50);
-	const gradient1 = await addNode("Gradient", 50, 350);
-	const gradient2 = await addNode("Gradient", 50, 800);
-	const blend = await addNode("Blend", 400, 600);
-	const output = await addNode("Output", 1200, 50);
+	// const input = await addNode("Input", 50, 50);
+	// const slicer = await addNode("Slicer", 800, 50);
+	// const gradient1 = await addNode("Gradient", 50, 350);
+	// const gradient2 = await addNode("Gradient", 50, 800);
+	// const blend = await addNode("Blend", 400, 600);
+	// const output = await addNode("Output", 1200, 50);
 
-	await connectWire(input, "pressure", slicer, "depth");
-	await connectWire(gradient1, "gradient", blend, "foreground");
-	await connectWire(gradient2, "gradient", blend, "background");
-	await connectWire(blend, "composite", slicer, "sliceable");
-	await connectWire(slicer, "streak", output, "diffuse");
+	// await connectWire(input, "pressure", slicer, "depth");
+	// await connectWire(gradient1, "gradient", blend, "foreground");
+	// await connectWire(gradient2, "gradient", blend, "background");
+	// await connectWire(blend, "composite", slicer, "sliceable");
+	// await connectWire(slicer, "streak", output, "diffuse");
+
+	const input = await addNode("Input", 50, 50);
+	const output = await addNode("Output", 500, 50);
+	await connectWire(input, "pressure", output, "diffuse");
 }
 
 function setupEvents() {
@@ -442,7 +446,7 @@ export function addNode(nodeName, x, y, startSelected = false) {
 
 export async function removeNode(nodeData) {
 	// Disallow removing the single output node
-	if (nodeData.name === "Output") return;
+	if (nodeData.name === "Input" || nodeData.name === "Output") return;
 
 	// Keep a list of every in and out connection to remove at the end
 	const inConnectionsToRemove = [];

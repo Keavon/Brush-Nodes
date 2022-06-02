@@ -5,14 +5,6 @@ const definition = {
 	name: "Output",
 	properties: [
 		{
-			identifier: "workflow",
-			direction: "in",
-			dimensions: "0d",
-			type: "string",
-			default: "Brush",
-			constraints: {},
-		},
-		{
 			identifier: "diffuse",
 			direction: "in",
 			dimensions: "2d",
@@ -26,22 +18,17 @@ const definition = {
 			type: "color",
 			constraints: {},
 		},
+		{
+			identifier: "displacement_scale",
+			direction: "in",
+			dimensions: "1d",
+			type: "float",
+			default: 1,
+			constraints: { min: -10, max: 10 }
+		},
 	],
 	rows: [
 		{ type: "Spacer" },
-		{
-			name: "workflow",
-			type: "Dropdown",
-			connectors: [],
-			data: {
-				options: ["Brush", "Material"],
-			},
-			options: {
-				label: "Workflow",
-				inputBoundIdentifier: "workflow",
-				outputBoundIdentifier: "visualization",
-			},
-		},
 		{
 			name: "diffuse_output",
 			type: "Output",
@@ -49,7 +36,7 @@ const definition = {
 				{ identifier: "diffuse", direction: "in", dimensions: "2d", type: "color" },
 			],
 			options: {
-				label: "Diffuse",
+				label: "Color",
 				outputBoundIdentifier: "diffuse",
 				textureUniformName: "u_diffuse",
 			},
@@ -66,6 +53,15 @@ const definition = {
 				textureUniformName: "u_displacement",
 			},
 		},
+		{
+			name: "displacement_scale_factor",
+			type: "Input",
+			options: {
+				label: "Displacement Scale",
+				inputBoundIdentifier: "displacement_scale",
+			},
+			data: {},
+		},
 	],
 };
 
@@ -75,18 +71,29 @@ export function getDefinition() {
 
 export function compute(nodeData) {
 	Object.values(definition.rows).forEach((row) => {
-		if (!row.options) return;
+		if (row.name === "displacement_scale_factor") {
+			ViewportShader.updateDisplacementScale(row.data.inputValue);
+		}
+
+		if (!row.options || !row.options.outputBoundIdentifier) return;
 
 		const identifier = row.options.outputBoundIdentifier;
-
-		if (identifier === "visualization") {
-			const workflow = row.data.inputValue;
-
-			document.querySelector(".column.right").style.display = workflow === "Material" ? "" : "none";
-			document.querySelector(".brush-viewport").style.display = workflow === "Brush" ? "" : "none";
-		} else {
-			const image = Node.getInPropertyValue(nodeData, identifier);
-			ViewportShader.updateImage(row.options.textureUniformName, image);
-		}
+		const image = Node.getInPropertyValue(nodeData, identifier);
+		ViewportShader.updateImage(row.options.textureUniformName, image);
 	});
+
+	const inputTexture = nodeData.inConnections.diffuse[0];
+	const inputDisplacement = nodeData.inConnections.displacement[0];
+	const inputTextureIdentifier = inputTexture?.identifier;
+	const inputTextureResolution = inputTexture?.node.propertyValues[inputTextureIdentifier]?.resolution;
+	const inputTextureFF = inputTextureResolution && Node.formFactorFromResolution(inputTextureResolution);
+
+	const ff = inputDisplacement ? "Square" : inputTextureFF;
+
+	document.querySelector(".column.right").style.display = ff === "Square" ? "" : "none";
+	document.querySelector(".brush-viewport").style.display = ff === "Strip" ? "" : "none";
+
+	const viewport3DClasses = document.querySelector(".material-viewports").classList;
+	if (inputDisplacement) viewport3DClasses.remove("viewport-2d-only");
+	else viewport3DClasses.add("viewport-2d-only");
 }
