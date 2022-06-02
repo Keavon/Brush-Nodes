@@ -1,6 +1,6 @@
-import * as Node from "/Materialism/js/Node.mjs";
-import * as Shader from "/Materialism/js/Shader.mjs";
-import * as NodeShader from "/Materialism/js/NodeShader.mjs";
+import * as Node from "/Brush-Nodes/js/Node.mjs";
+import * as Shader from "/Brush-Nodes/js/Shader.mjs";
+import * as NodeShader from "/Brush-Nodes/js/NodeShader.mjs";
 
 // Strip resolution
 const STRIP_RESOLUTION = [2048, 128]; // Max WebGL supports is 16384

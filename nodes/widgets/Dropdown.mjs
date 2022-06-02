@@ -1,4 +1,4 @@
-import * as Node from "/Materialism/js/Node.mjs";
+import * as Node from "/Brush-Nodes/js/Node.mjs";
 
 export function getPropertyValue(nodeData, identifier, definition) {
 	const row = definition.rows.find(row => row.options && row.options.inputBoundIdentifier === identifier);

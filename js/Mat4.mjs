@@ -1,4 +1,4 @@
-import * as Vector3 from "/Materialism/js/Vector3.mjs";
+import * as Vector3 from "/Brush-Nodes/js/Vector3.mjs";
 
 export function identity() {
 	return [
@@ -125,14 +125,14 @@ export function lookAt(eye, target, upDirection = [0, 1, 0]) {
 	let up = Vector3.normalize(upDirection);
 	const right = Vector3.normalize(Vector3.cross(forward, up));
 	up = Vector3.cross(right, forward);
-	
+
 	const result = [
 		right[0], up[0], -forward[0], 0,
 		right[1], up[1], -forward[1], 0,
 		right[2], up[2], -forward[2], 0,
 		-Vector3.dot(right, eye), -Vector3.dot(up, eye), Vector3.dot(forward, eye), 1,
 	];
-	
+
 	return result;
 }
 

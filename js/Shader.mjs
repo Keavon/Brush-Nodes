@@ -1,5 +1,5 @@
 export async function createProgram(gl, vertexShaderPath, fragmentShaderPath) {
-	const relativePrefix = "/Materialism/glsl/";
+	const relativePrefix = "/Brush-Nodes/glsl/";
 	const vertexShaderSource = fetch(relativePrefix + vertexShaderPath).then(response => response.text());
 	const fragmentShaderSource = fetch(relativePrefix + fragmentShaderPath).then(response => response.text());
 	const [vert, frag] = await Promise.all([vertexShaderSource, fragmentShaderSource]);

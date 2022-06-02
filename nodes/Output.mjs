@@ -1,5 +1,5 @@
-import * as Node from "/Materialism/js/Node.mjs";
-import * as ViewportShader from "/Materialism/js/ViewportShader.mjs";
+import * as Node from "/Brush-Nodes/js/Node.mjs";
+import * as ViewportShader from "/Brush-Nodes/js/ViewportShader.mjs";
 
 const definition = {
 	name: "Output",

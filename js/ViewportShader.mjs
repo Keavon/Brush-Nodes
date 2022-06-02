@@ -1,5 +1,5 @@
-import * as Shader from "/Materialism/js/Shader.mjs";
-import * as Mat4 from "/Materialism/js/Mat4.mjs";
+import * as Shader from "/Brush-Nodes/js/Shader.mjs";
+import * as Mat4 from "/Brush-Nodes/js/Mat4.mjs";
 
 // Viewports
 const viewport3D = {};
@@ -80,7 +80,7 @@ function transformProj() {
 }
 
 function loadMesh() {
-	const mesh = { quad: "/Materialism/models/plane.obj" };
+	const mesh = { quad: "/Brush-Nodes/models/plane.obj" };
 
 	return new Promise((resolve, reject) => {
 		OBJ.downloadMeshes(mesh, (loadedMesh) => resolve(loadedMesh.quad));

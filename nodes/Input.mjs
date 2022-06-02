@@ -1,7 +1,7 @@
-import * as Node from "/Materialism/js/Node.mjs";
-import { sampleInput } from "/Materialism/sample-input.mjs";
-// import * as Shader from "/Materialism/js/Shader.mjs";
-// import * as NodeShader from "/Materialism/js/NodeShader.mjs";
+import * as Node from "/Brush-Nodes/js/Node.mjs";
+import { sampleInput } from "/Brush-Nodes/sample-input.mjs";
+// import * as Shader from "/Brush-Nodes/js/Shader.mjs";
+// import * as NodeShader from "/Brush-Nodes/js/NodeShader.mjs";
 
 // let program;
 // let gl;

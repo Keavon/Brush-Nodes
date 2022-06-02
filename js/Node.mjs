@@ -1,12 +1,12 @@
-import * as Node_PerlinNoise from "/Materialism/nodes/PerlinNoise.mjs";
-import * as Node_VoronoiNoise from "/Materialism/nodes/VoronoiNoise.mjs";
-import * as Node_Gradient from "/Materialism/nodes/Gradient.mjs";
-import * as Node_Blend from "/Materialism/nodes/Blend.mjs";
-import * as Node_Levels from "/Materialism/nodes/Levels.mjs";
-import * as Node_Slicer from "/Materialism/nodes/Slicer.mjs";
-import * as Node_Color from "/Materialism/nodes/Color.mjs";
-import * as Node_Input from "/Materialism/nodes/Input.mjs";
-import * as Node_Output from "/Materialism/nodes/Output.mjs";
+import * as Node_PerlinNoise from "/Brush-Nodes/nodes/PerlinNoise.mjs";
+import * as Node_VoronoiNoise from "/Brush-Nodes/nodes/VoronoiNoise.mjs";
+import * as Node_Gradient from "/Brush-Nodes/nodes/Gradient.mjs";
+import * as Node_Blend from "/Brush-Nodes/nodes/Blend.mjs";
+import * as Node_Levels from "/Brush-Nodes/nodes/Levels.mjs";
+import * as Node_Slicer from "/Brush-Nodes/nodes/Slicer.mjs";
+import * as Node_Color from "/Brush-Nodes/nodes/Color.mjs";
+import * as Node_Input from "/Brush-Nodes/nodes/Input.mjs";
+import * as Node_Output from "/Brush-Nodes/nodes/Output.mjs";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
 	"Voronoi Noise": Node_VoronoiNoise,
@@ -19,12 +19,12 @@ const nodes = {
 	"Output": Node_Output,
 };
 
-import * as Widget_Spacer from "/Materialism/nodes/widgets/Spacer.mjs";
-import * as Widget_Thumbnail from "/Materialism/nodes/widgets/Thumbnail.mjs";
-import * as Widget_Label from "/Materialism/nodes/widgets/Label.mjs";
-import * as Widget_Input from "/Materialism/nodes/widgets/Input.mjs";
-import * as Widget_Dropdown from "/Materialism/nodes/widgets/Dropdown.mjs";
-import * as Widget_Output from "/Materialism/nodes/widgets/Output.mjs";
+import * as Widget_Spacer from "/Brush-Nodes/nodes/widgets/Spacer.mjs";
+import * as Widget_Thumbnail from "/Brush-Nodes/nodes/widgets/Thumbnail.mjs";
+import * as Widget_Label from "/Brush-Nodes/nodes/widgets/Label.mjs";
+import * as Widget_Input from "/Brush-Nodes/nodes/widgets/Input.mjs";
+import * as Widget_Dropdown from "/Brush-Nodes/nodes/widgets/Dropdown.mjs";
+import * as Widget_Output from "/Brush-Nodes/nodes/widgets/Output.mjs";
 const widgets = {
 	"Spacer": Widget_Spacer,
 	"Thumbnail": Widget_Thumbnail,

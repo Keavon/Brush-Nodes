@@ -1,5 +1,5 @@
-import * as Node from "/Materialism/js/Node.mjs";
-import Demo from "/Materialism/js/Demo.mjs";
+import * as Node from "/Brush-Nodes/js/Node.mjs";
+import Demo from "/Brush-Nodes/js/Demo.mjs";
 
 const nodeDatabase = [];
 

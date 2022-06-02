@@ -1,5 +1,5 @@
-import * as NodeGraph from "/Materialism/js/NodeGraph.mjs";
-import * as Node from "/Materialism/js/Node.mjs";
+import * as NodeGraph from "/Brush-Nodes/js/NodeGraph.mjs";
+import * as Node from "/Brush-Nodes/js/Node.mjs";
 
 export default async function Demo() {
 	switch (window.location.hash) {
