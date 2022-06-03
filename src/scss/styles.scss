@@ -1,0 +1,96 @@
+html,
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	font-family: 'Yantramanav', sans-serif;
+	background: hsl(0, 0%, 12%);
+	overflow: hidden;
+	font-size: 0;
+	overscroll-behavior: none;
+	display: flex;
+
+	--brush-strip-height: 200px;
+}
+
+.node-graph {
+	width: 100%;
+	height: 100%;
+	display: inline-block;
+	overflow: hidden;
+	position: relative;
+	font-size: 12px;
+	user-select: none;
+
+	.instructions {
+		display: block;
+		position: absolute;
+		top: 10px;
+		left: 0;
+		right: 0;
+		color: white;
+		font-size: 16px;
+		text-align: center;
+	}
+}
+
+.viewport-strip {
+	height: auto;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+
+	canvas {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		height: var(--brush-strip-height);
+	}
+}
+
+.material-viewports {
+	display: inline-block;
+	position: absolute;
+	width: 25%;
+	height: 100%;
+	right: 0;
+	top: 0;
+
+	&.short {
+		height: calc(100% - var(--brush-strip-height));
+	}
+	
+	&.viewport-2d-only {
+		.viewport-3d {
+			display: none;
+		}
+
+		.viewport-2d {
+			height: 100%;
+		}
+	}
+	
+	&.viewport-3d-only {
+		.viewport-2d {
+			display: none;
+		}
+
+		.viewport-3d {
+			height: 100%;
+		}
+	}
+
+	.viewport-3d,
+	.viewport-2d {
+		width: 100%;
+		height: 50%;
+		background: black;
+		position: relative;
+
+		canvas {
+			width: 100%;
+			height: 100%;
+			display: block;
+		}
+	}
+}
