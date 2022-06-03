@@ -16,10 +16,10 @@ out vec4 Color;
 vec2 rotateUV(vec2 uv, float rotation, vec2 mid)
 {
 	float rads = rotation / 57.2958;
-    return vec2(
-        cos(rads) * (uv.x - mid.x) + sin(rads) * (uv.y - mid.y) + mid.y,
-        cos(rads) * (uv.y - mid.y) - sin(rads) * (uv.x - mid.x) + mid.x
-    );
+	return vec2(
+		cos(rads) * (uv.x - mid.x) + sin(rads) * (uv.y - mid.y) + mid.y,
+		cos(rads) * (uv.y - mid.y) - sin(rads) * (uv.x - mid.x) + mid.x
+	);
 }
 
 
