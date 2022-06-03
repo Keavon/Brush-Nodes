@@ -39,6 +39,7 @@ module.exports = {
 	devtool: "inline-source-map",
 	devServer: {
 		static: "./dist",
+		hot: true,
 	},
 	watchOptions: {
 		ignored: /node_modules/,

@@ -152,6 +152,7 @@ function graphMousedownHandler(event) {
 			else if (cursorWireDirectionOnNodeSide === "in" && connectorInput.length > 0) {
 				const sourceSide = connectorInput[0];
 				disconnectWire(sourceSide.node, sourceSide.identifier, nodeData, identifier);
+				saveGraph();
 
 				const connectorElement = sourceSide.node.element.querySelector(`.connector[data-identifier="${sourceSide.identifier}"]`);
 				cursorWireDirectionOnNodeSide = "out";
@@ -292,6 +293,7 @@ function graphMouseupHandler(event) {
 
 				if (cursorWireDirectionOnNodeSide === "out") connectWire(nodeSideData, nodeSideIdentifier, nodeData, nodeIdentifier);
 				else if (cursorWireDirectionOnNodeSide === "in") connectWire(nodeData, nodeIdentifier, nodeSideData, nodeSideIdentifier);
+				saveGraph();
 			}
 
 			const path = cursorWireConnection.wire;
@@ -299,8 +301,6 @@ function graphMouseupHandler(event) {
 
 			cursorWireConnection = null;
 			cursorWireDirectionOnNodeSide = null;
-
-			saveGraph();
 		}
 
 		draggingSelection = false;
@@ -381,32 +381,38 @@ function graphKeydownHandler(event) {
 		return;
 	}
 
-	if (event.key.toLowerCase() === "g") {
+	if (event.key.toLowerCase() === "g" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Gradient");
+		saveGraph();
 	}
 
-	if (event.key.toLowerCase() === "p") {
+	if (event.key.toLowerCase() === "p" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Perlin Noise");
+		saveGraph();
 	}
 
-	if (event.key.toLowerCase() === "v") {
+	if (event.key.toLowerCase() === "v" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Voronoi Noise");
+		saveGraph();
 	}
 
-	if (event.key.toLowerCase() === "b") {
+	if (event.key.toLowerCase() === "b" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Blend");
+		saveGraph();
 	}
 
-	if (event.key.toLowerCase() === "l") {
+	if (event.key.toLowerCase() === "l" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Levels");
+		saveGraph();
 	}
 
-	if (event.key.toLowerCase() === "s") {
+	if (event.key.toLowerCase() === "s" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Slicer");
+		saveGraph();
 	}
 
-	// if (event.key.toLowerCase() === "c") {
-	// 	if (!event.ctrlKey && !event.shiftKey) addNode("Color");
+	// if (event.key.toLowerCase() === "c" && !event.ctrlKey && !event.shiftKey) {
+	// 	addNode("Color");
 	// }
 
 	if (event.key.toLowerCase() === "enter" && document.activeElement.closest("input")) {
@@ -428,8 +434,6 @@ export function addNode(nodeName, x, y, startSelected = false) {
 	nodeGraph.appendChild(nodeData.element);
 	nodeDatabase.push(nodeData);
 	updateNodePosition(nodeData);
-
-	saveGraph();
 
 	return nodeData;
 }
@@ -486,12 +490,11 @@ export function removeNode(nodeData) {
 
 	// Remove the node from the node database
 	nodeDatabase.splice(nodeDatabase.indexOf(nodeData), 1);
-
-	saveGraph();
 }
 
 function removeSelectedNodes() {
 	nodeDatabase.filter(node => node.selected).map((nodeData) => removeNode(nodeData));
+	saveGraph();
 }
 
 function moveSelectedNodes(deltaMove) {
@@ -707,8 +710,6 @@ export function connectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeId
 	const wire = createWirePath(outConnector, inConnector);
 	outConnection.wire = wire;
 	inConnection.wire = wire;
-
-	saveGraph();
 }
 
 function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
@@ -736,8 +737,6 @@ function disconnectWire(outNodeData, outNodeIdentifier, inNodeData, inNodeIdenti
 
 	// Recompute everything downstream
 	Node.recomputeDownstreamNodes(inNodeData);
-
-	saveGraph();
 }
 
 function connectionAlreadyExists(outNodeData, outNodeIdentifier, inNodeData, inNodeIdentifier) {
