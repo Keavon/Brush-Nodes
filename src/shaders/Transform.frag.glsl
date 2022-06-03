@@ -10,16 +10,22 @@ uniform float u_scale_y;
 uniform float u_offset_x;
 uniform float u_offset_y;
 uniform float u_rotation;
+uniform int u_clamp_rotation_sampling;
 in vec2 v_uvCoordinates;
 out vec4 Color;
 
 vec2 rotateUV(vec2 uv, float rotation, vec2 mid)
 {
 	float rads = rotation / 57.2958;
-	return vec2(
+	vec2 rotated_uv = vec2(
 		cos(rads) * (uv.x - mid.x) + sin(rads) * (uv.y - mid.y) + mid.y,
 		cos(rads) * (uv.y - mid.y) - sin(rads) * (uv.x - mid.x) + mid.x
 	);
+
+	if (u_clamp_rotation_sampling == 0) {
+		rotated_uv = clamp(rotated_uv, 0.0, 1.0);
+	}
+	return rotated_uv;
 }
 
 
@@ -29,11 +35,10 @@ void main() {
 		return;
 	}
 
-	// Transform the UV coordinates such that we can offset, scale and rotate
+	// Transform the UV coordinates such that we can Translate, Rotate and Scale
 	vec2 uv = v_uvCoordinates;
-	uv = rotateUV(uv, u_rotation, vec2(0.5, 0.5));
-	uv = vec2(u_offset_x, u_offset_y)  + uv;
-	uv = vec2(u_scale_x, u_scale_y) * fract(uv);
+	uv = rotateUV(uv, u_rotation, vec2(0.5, 0.5)); // Rotate
+	uv = vec2(u_offset_x, u_offset_y) + vec2(u_scale_x, u_scale_y) * fract(uv); // Translate and Scale
 
-	Color = texture(u_foreground, uv);
+	Color = vec4(texture(u_foreground, uv).rgb, 1);
 }

@@ -10,6 +10,7 @@ let gl;
 let gl_tile_type;
 
 const tileMode = ["Mirror Repeat", "Repeat", "Clamp"];
+const cornerSample = ["Corner Clamping Enabled", "Corner Clamping Disabled"];
 
 export function getDefinition() {
 	const definition = {
@@ -69,6 +70,14 @@ export function getDefinition() {
 				type: "float",
 				default: 0.0,
 				constraints: { min: -360, max: 360 }
+			},
+			{
+				identifier: "clamp_rotation_sampling",
+				direction: "in",
+				dimensions: "0d",
+				type: "string",
+				default: 0,
+				constraints: {}
 			},
 			{
 				identifier: "composite",
@@ -151,7 +160,19 @@ export function getDefinition() {
 					inputBoundIdentifier: "rotation",
 				},
 				data: {},
-			}
+			},
+			{
+				name: "clamp_rotation_sampling",
+				type: "Dropdown",
+				connectors: [],
+				options: {
+					label: "Clamp Rotation Sampling",
+					inputBoundIdentifier: "clamp_rotation_sampling",
+				},
+				data: {
+					options: cornerSample,
+				},
+			},
 		],
 	};
 
@@ -186,6 +207,7 @@ export function compute(nodeData) {
 		u_offset_y: { value: Node.getInPropertyValue(nodeData, "offset_y"), type: "float", vector: false, location: null },
 		u_rotation: { value: Node.getInPropertyValue(nodeData, "rotation"), type: "float", vector: false, location: null },
 		u_foregroundExists: { value: true, type: "bool", vector: false, location: null },
+		u_clamp_rotation_sampling: { value: cornerSample.indexOf(Node.getInPropertyValue(nodeData, "clamp_rotation_sampling")), type: "int", vector: false, location: null },
 	};
 	const textures = {
 		u_foreground: { value: Node.getInPropertyValue(nodeData, "foreground"), location: null },
