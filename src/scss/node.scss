@@ -85,6 +85,10 @@ section {
 			margin: 0;
 		}
 	}
+
+	select {
+		margin: 0;
+	}
 	
 	label input,
 	select {
@@ -113,7 +117,6 @@ section {
 
 	// Dropdown input box
 	select {
-		margin: 0;
 		text-align: left;
 		-moz-appearance: none;
 		-webkit-appearance: none;
