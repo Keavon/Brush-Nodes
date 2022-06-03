@@ -1,6 +1,11 @@
 import * as Node from "@/Node.js";
 import Demo from "@/Demo.js";
 
+import Style1 from "@/data/1_dotted_stamp_roller.json";
+import Style2 from "@/data/2_bristle_brush.json";
+import Style3 from "@/data/3_diluted_ink.json";
+import Style4 from "@/data/4_ragged_solid_ink_brush.json";
+
 const nodeDatabase = [];
 
 let cursorWireConnection = null;
@@ -431,6 +436,26 @@ function graphKeydownHandler(event) {
 	if (event.key.toLowerCase() === "backspace" || event.key.toLowerCase() === "delete") {
 		if (event.ctrlKey) localStorage.removeItem(storageKey);
 		else if (document.activeElement.tagName !== "INPUT") removeSelectedNodes();
+	}
+
+	if (event.key.toLowerCase() === "1" && event.ctrlKey) {
+		localStorage.setItem(storageKey, JSON.stringify(Style1));
+		event.preventDefault();
+	}
+
+	if (event.key.toLowerCase() === "2" && event.ctrlKey) {
+		localStorage.setItem(storageKey, JSON.stringify(Style2));
+		event.preventDefault();
+	}
+
+	if (event.key.toLowerCase() === "3" && event.ctrlKey) {
+		localStorage.setItem(storageKey, JSON.stringify(Style3));
+		event.preventDefault();
+	}
+
+	if (event.key.toLowerCase() === "4" && event.ctrlKey) {
+		localStorage.setItem(storageKey, JSON.stringify(Style4));
+		event.preventDefault();
 	}
 }
 
