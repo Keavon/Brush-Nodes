@@ -36,8 +36,10 @@ const widgets = {
 	"Output": Widget_Output,
 };
 
-export const SQUARE_RESOLUTION = [512, 512];
-export const STRIP_RESOLUTION = [2048, 128];
+// Max WebGL supports is 16384
+const multiplier = 4;
+export const SQUARE_RESOLUTION = [512 * multiplier, 512 * multiplier];
+export const STRIP_RESOLUTION = [2048 * multiplier, 128 * multiplier];
 export const formFactorResolutions = {
 	"Square": SQUARE_RESOLUTION,
 	"Strip": STRIP_RESOLUTION,

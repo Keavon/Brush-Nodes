@@ -5,9 +5,6 @@ import * as NodeShader from "@/NodeShader.js";
 import BillboardVert from "@/shaders/Billboard.vert.glsl";
 import SlicerFrag from "@/shaders/Slicer.frag.glsl";
 
-// Strip resolution
-const STRIP_RESOLUTION = [2048, 128]; // Max WebGL supports is 16384
-
 let program;
 let gl;
 
@@ -87,7 +84,7 @@ export function setup() {
 
 export function compute(nodeData) {
 	// Set up render data
-	const resolution = STRIP_RESOLUTION
+	const resolution = Node.STRIP_RESOLUTION;
 	// TODO: Reenable retrieval from the node socket when we can encode large arrays as textures instead of uniforms
 	// const timeSeriesData = Node.getInPropertyValue(nodeData, "depth")
 	// const timeSeriesData = Array(resolution[0]).fill(0).map((_, i) => 1 - (Math.cos((i / resolution[0]) * Math.PI * 2) + 1) / 2);
