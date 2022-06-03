@@ -72,7 +72,7 @@ function transformView() {
 	const radius = 2.5;
 	const height = 1;
 	const eye = [Math.sin(time) * radius, height, Math.cos(time) * radius];
-	const eyeAbove = [0.01, 5, 0.01];
+	const eyeAbove = [0.0, 7, 0.01];
 	let matrix = Mat4.lookAt(spinning ? eye : eyeAbove, [0, 0, 0]);
 	return matrix;
 }
