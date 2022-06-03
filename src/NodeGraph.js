@@ -381,6 +381,10 @@ function graphKeydownHandler(event) {
 		return;
 	}
 
+	if (event.key.toLowerCase() === "tab") {
+		document.querySelector(".material-viewports").classList.toggle("full");
+	}
+
 	if (event.key.toLowerCase() === "g" && !event.ctrlKey && !event.shiftKey) {
 		addNode("Gradient");
 		saveGraph();

@@ -56,6 +56,10 @@ body {
 	right: 0;
 	top: 0;
 
+	&.full {
+		width: 100%;
+	}
+
 	&.short {
 		height: calc(100% - var(--brush-strip-height));
 	}
