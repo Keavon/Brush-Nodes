@@ -7,6 +7,7 @@ import * as Node_Slicer from "@/nodes/Slicer.js";
 import * as Node_Color from "@/nodes/Color.js";
 import * as Node_Input from "@/nodes/Input.js";
 import * as Node_Output from "@/nodes/Output.js";
+import * as Node_Transform from "@/nodes/Transform.js";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
 	"Voronoi Noise": Node_VoronoiNoise,
@@ -17,6 +18,7 @@ const nodes = {
 	"Color": Node_Color,
 	"Input": Node_Input,
 	"Output": Node_Output,
+	"Transform": Node_Transform,
 };
 
 import * as Widget_Spacer from "@/nodes/widgets/Spacer.js";

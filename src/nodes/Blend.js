@@ -143,8 +143,8 @@ export function compute(nodeData) {
 	uniforms.u_backgroundExists.value = Boolean(textures.u_background);
 
 	NodeShader.initializeProgram(gl, program, resolution, uniforms, textures); // TODO: Should only be called once
-	const framebuffer = NodeShader.renderToTexture(gl, program, resolution, uniforms);
-	NodeShader.composite(gl, program, resolution, uniforms, textures);
+	const framebuffer = NodeShader.renderToTexture(gl, resolution);
+	NodeShader.composite(gl, uniforms, textures);
 	const image = NodeShader.readRenderedTexture(gl, framebuffer, resolution);
 
 	Node.setPropertyValue(nodeData, "composite", image);

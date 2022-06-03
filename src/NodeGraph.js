@@ -411,6 +411,11 @@ function graphKeydownHandler(event) {
 		saveGraph();
 	}
 
+	if (event.key.toLowerCase() === "t" && !event.ctrlKey && !event.shiftKey) {
+		addNode("Transform");
+		saveGraph();
+	}
+
 	// if (event.key.toLowerCase() === "c" && !event.ctrlKey && !event.shiftKey) {
 	// 	addNode("Color");
 	// }
