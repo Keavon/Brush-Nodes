@@ -17,6 +17,7 @@ function compileShader(gl, shaderType, shaderSource) {
 	const shader = gl.createShader(shaderType);
 	gl.shaderSource(shader, shaderSource);
 	gl.compileShader(shader);
+	gl.GL_TEXTURE_WRAP_S = gl.GL_REPEAT;
 
 	const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
 	if (success) return shader;

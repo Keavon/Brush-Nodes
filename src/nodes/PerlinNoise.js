@@ -120,8 +120,8 @@ export function compute(nodeData) {
 	};
 
 	NodeShader.initializeProgram(gl, program, resolution, uniforms);
-	const framebuffer = NodeShader.renderToTexture(gl, program, resolution, uniforms);
-	NodeShader.composite(gl, program, resolution, uniforms);
+	const framebuffer = NodeShader.renderToTexture(gl, resolution);
+	NodeShader.composite(gl, uniforms);
 	const image = NodeShader.readRenderedTexture(gl, framebuffer, resolution);
 
 	Node.setPropertyValue(nodeData, "pattern", image);

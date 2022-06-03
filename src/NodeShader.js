@@ -45,7 +45,7 @@ export function initializeProgram(gl, program, resolution, uniforms, textures = 
 	gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 }
 
-export function renderToTexture(gl, program, resolution, uniforms) {
+export function renderToTexture(gl, resolution) {
 	// Render texture
 	const texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -55,6 +55,7 @@ export function renderToTexture(gl, program, resolution, uniforms) {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
 
 	// Framebuffer object
 	const framebuffer = gl.createFramebuffer();
@@ -74,7 +75,7 @@ export function readRenderedTexture(gl, framebuffer, resolution) {
 	return { resolution, pixelData };
 }
 
-export function composite(gl, program, resolution, uniforms, textures = {}) {
+export function composite(gl, uniforms, textures = {}, wrap=gl.MIRRORED_REPEAT) {
 	// Uniforms
 	// gl.uniform2fv(uniformLocations["u_resolution"], resolution);
 	Object.keys(uniforms).forEach((uniformName) => {
@@ -120,8 +121,8 @@ export function composite(gl, program, resolution, uniforms, textures = {}) {
 
 		// Disable mipmaps
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
 
 		const image = textures[textureName].value || placeholderImage;
 		const width = image.resolution[0];
