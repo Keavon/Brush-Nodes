@@ -1,3 +1,5 @@
+import * as NodeGraph from "@/NodeGraph";
+
 import * as Node_PerlinNoise from "@/nodes/PerlinNoise.js";
 import * as Node_VoronoiNoise from "@/nodes/VoronoiNoise.js";
 import * as Node_Gradient from "@/nodes/Gradient.js";
@@ -243,10 +245,10 @@ export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 export function recomputeProperties(nodeData) {
 	if (nodes[nodeData.name].compute) {
 		nodes[nodeData.name].compute(nodeData);
-		window?.updateGraphView();
+		NodeGraph.updateGraphView();
 	}
 	else {
-		console.error(`${nodeData.name} node has no compute() function implementation.`);
+		console.error(`${nodeData.name} node has no compute function implementation.`);
 	}
 }
 

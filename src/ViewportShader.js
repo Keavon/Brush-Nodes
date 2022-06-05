@@ -30,8 +30,12 @@ viewportStrip.program = null;
 
 // Meshes
 viewport3D.mesh = null;
-let planeMesh = new Promise(() => { });
-let strokeMesh = new Promise(() => { });
+let planeMeshLoadResolve;
+let planeMeshLoaded = new Promise((resolve) => { planeMeshLoadResolve = resolve; });
+let planeMesh;
+let strokeMeshLoadResolve;
+let strokeMeshLoaded = new Promise((resolve) => { strokeMeshLoadResolve = resolve; });
+let strokeMesh;
 
 let spinning = true;
 
@@ -200,18 +204,21 @@ async function setup3D() {
 
 	planeMesh = new OBJ.Mesh(planeSource);
 	strokeMesh = new OBJ.Mesh(strokeSource);
+	planeMeshLoadResolve();
+	strokeMeshLoadResolve();
 
-	await set3DProgramMesh("Plane");
+	await set3DProgramMesh("Init");
 }
 
 export async function set3DProgramMesh(meshName) {
+	await Promise.all([planeMeshLoaded, strokeMeshLoaded]);
+
+	if (meshName === "Init" && viewport3D.mesh) return;
+	viewport3D.mesh = { "Init": planeMesh, "Plane": planeMesh, "Stroke": strokeMesh }[meshName];
+	const drawingStroke = meshName === "Stroke";
+
 	const gl = viewport3D.canvas.getContext("webgl2");
-
-	const plane = await planeMesh;
-	const stroke = await strokeMesh;
-
-	viewport3D.mesh = { "Plane": plane, "Stroke": stroke }[meshName];
-	if (viewport3D.program) initializeViewportProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh);
+	if (viewport3D.program) initializeViewportProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh, drawingStroke);
 
 	spinning = meshName === "Plane";
 }
@@ -300,12 +307,17 @@ function resizeCanvas(gl) {
 	return [gl.canvas.width, gl.canvas.height];
 }
 
-function initializeViewportProgram(gl, program, uniforms, textures, mesh) {
+function initializeViewportProgram(gl, program, uniforms, textures, mesh, drawingStroke) {
 	// Prepare the canvas and shader
 	gl.useProgram(program);
-	gl.disable(gl.DEPTH_TEST);
-	gl.enable(gl.BLEND);
-	gl.blendEquation(gl.MIN);
+
+	if (drawingStroke) {
+		gl.disable(gl.DEPTH_TEST);
+		gl.enable(gl.BLEND);
+		gl.blendEquation(gl.MIN);
+	} else {
+		gl.enable(gl.DEPTH_TEST);
+	}
 
 	// Locate uniforms
 	Object.keys(uniforms).forEach((uniformName) => {

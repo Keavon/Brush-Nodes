@@ -1,11 +1,9 @@
 import * as Node from "@/Node.js";
-import sampleInput from "@/data/sample-input.json";
+import SampleInput from "@/data/sample-input.json";
 
 let pressureStrip;
 let altitudeStrip;
-let azimuthStrip;
-let xStrip;
-let yStrip;
+let progradeStrip;
 
 export function getDefinition() {
 	const definition = {
@@ -26,19 +24,7 @@ export function getDefinition() {
 				type: "color",
 			},
 			{
-				identifier: "azimuth",
-				direction: "out",
-				dimensions: "2d",
-				type: "color",
-			},
-			{
-				identifier: "x",
-				direction: "out",
-				dimensions: "2d",
-				type: "color",
-			},
-			{
-				identifier: "y",
+				identifier: "prograde",
 				direction: "out",
 				dimensions: "2d",
 				type: "color",
@@ -82,56 +68,20 @@ export function getDefinition() {
 			},
 
 			{ type: "Spacer" },
-			{ name: "azimuth_label", type: "Label", options: { label: "Azimuth:" } },
+			{ name: "prograde_label", type: "Label", options: { label: "Prograde Tilt:" } },
 			{
 				// Unique identifier for this row in the node definition
-				name: "azimuth_thumbnail",
+				name: "prograde_thumbnail",
 				// The widget type for the row to be rendered as
 				type: "Thumbnail",
 				// List of any connector dots hosted on the input and output sides of the row
 				connectors: [
-					{ identifier: "azimuth", direction: "out", dimensions: "2d", type: "color" },
+					{ identifier: "prograde", direction: "out", dimensions: "2d", type: "color" },
 				],
 				// Option specific to the widget type
 				options: {
 					// Tells the thumbnail which output property identifier read its value from to display
-					outputBoundIdentifier: "azimuth",
-				},
-			},
-
-			{ type: "Spacer" },
-			{ name: "x_label", type: "Label", options: { label: "X:" } },
-			{
-				// Unique identifier for this row in the node definition
-				name: "x_thumbnail",
-				// The widget type for the row to be rendered as
-				type: "Thumbnail",
-				// List of any connector dots hosted on the input and output sides of the row
-				connectors: [
-					{ identifier: "x", direction: "out", dimensions: "2d", type: "color" },
-				],
-				// Option specific to the widget type
-				options: {
-					// Tells the thumbnail which output property identifier read its value from to display
-					outputBoundIdentifier: "x",
-				},
-			},
-
-			{ type: "Spacer" },
-			{ name: "y_label", type: "Label", options: { label: "Y:" } },
-			{
-				// Unique identifier for this row in the node definition
-				name: "y_thumbnail",
-				// The widget type for the row to be rendered as
-				type: "Thumbnail",
-				// List of any connector dots hosted on the input and output sides of the row
-				connectors: [
-					{ identifier: "y", direction: "out", dimensions: "2d", type: "color" },
-				],
-				// Option specific to the widget type
-				options: {
-					// Tells the thumbnail which output property identifier read its value from to display
-					outputBoundIdentifier: "y",
+					outputBoundIdentifier: "prograde",
 				},
 			},
 		],
@@ -143,39 +93,63 @@ export function getDefinition() {
 export function setup() {
 	const resolution = Node.formFactorResolutions["Strip"];
 
-	pressureStrip = makeStripTexture(resolution, sampleInput.pressure);
-	altitudeStrip = makeStripTexture(resolution, sampleInput.altitude, Math.PI / 2); // 0 (parallel to surface) to π/2 (normal to surface)
-	azimuthStrip = makeStripTexture(resolution, sampleInput.azimuth, Math.PI * 2); // 2π radians clockwise from +x
-	xStrip = makeStripTexture(resolution, sampleInput.x);
-	yStrip = makeStripTexture(resolution, sampleInput.y);
+	let foo = [];
+	const progradeSamples = SampleInput.azimuth.map((azimuthSample, i) => {
+		const xSamplePrev = i === 0 ? SampleInput.x[0] : SampleInput.x[i - 1];
+		const ySamplePrev = i === 0 ? SampleInput.y[0] : SampleInput.y[i - 1];
+		const xSample = SampleInput.x[i];
+		const ySample = SampleInput.y[i];
+		const deltaX = xSample - xSamplePrev;
+		const deltaY = ySample - ySamplePrev;
+		const xyLength = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+		const xyVector = [deltaX / xyLength || 0, deltaY / xyLength || 0];
+
+		const azimuthVector = [Math.cos(azimuthSample), Math.sin(azimuthSample)];
+
+		const dotProduct = xyVector[0] * azimuthVector[0] + xyVector[1] * azimuthVector[1];
+		const angle = Math.acos(dotProduct);
+
+		const result = angle / Math.PI;
+		foo.push(result);
+		return result;
+	});
+	console.log(foo);
+
+	pressureStrip = makeStripTexture(resolution, SampleInput.pressure);
+	altitudeStrip = makeStripTexture(resolution, SampleInput.altitude, Math.PI / 2); // 0 (parallel to surface) to π/2 (normal to surface)
+	progradeStrip = makeStripTexture(resolution, progradeSamples); // 0.5 is prograde, 0 and 1 are retrograde, 0.25 and 0.75 are perpendicular in either direction
 }
 
 export function compute(nodeData) {
 	Node.setPropertyValue(nodeData, "pressure", pressureStrip);
 	Node.setPropertyValue(nodeData, "altitude", altitudeStrip);
-	Node.setPropertyValue(nodeData, "azimuth", azimuthStrip);
-	Node.setPropertyValue(nodeData, "x", xStrip);
-	Node.setPropertyValue(nodeData, "y", yStrip);
+	Node.setPropertyValue(nodeData, "prograde", progradeStrip);
 }
 
 function makeStripTexture(resolution, data, range = 1) {
-	const lerp = (a, b, t) => a + (b - a) * t;
+	const [width, height] = resolution;
 
-	const repeatFactor = Math.ceil(resolution[0] / data.length);
+	const smallCanvas = document.createElement("canvas");
+	const smallContext = smallCanvas.getContext("2d");
+	smallCanvas.width = data.length;
+	smallCanvas.height = 1;
 
-	const dataPackedRow = data.flatMap((_, index) => {
-		const interpolatedPixels = Array(repeatFactor * 4);
-
-		for (let i = 0; i < repeatFactor; i++) {
-			const interpolated = lerp(data[index], data[index + 1], i / repeatFactor);
-			const normalizedRange = interpolated / range;
-			const outOf255 = Math.round(normalizedRange * 255);
-			interpolatedPixels.push([outOf255, outOf255, outOf255, 255]);
-		}
-
-		return interpolatedPixels.flat();
+	const pixelValues = data.flatMap((floatingValue) => {
+		const value = Math.round(floatingValue * 255 / range);
+		return [value, value, value, 255];
 	});
-	const dataPacked = Array.from({ length: resolution[1] }, () => dataPackedRow).flat();
-	const pixelData = Uint8Array.from(dataPacked);
+	const dataArray = new Uint8ClampedArray(pixelValues);
+	const imageData = new ImageData(dataArray, data.length, 1);
+	smallContext.putImageData(imageData, 0, 0, 0, 0, width, height);
+
+	const bigCanvas = document.createElement("canvas");
+	const bigContext = bigCanvas.getContext("2d");
+	bigCanvas.width = width;
+	bigCanvas.height = height;
+
+	bigContext.drawImage(smallCanvas, 0, 0, width, height);
+
+	const readData = bigContext.getImageData(0, 0, width, height);
+	const pixelData = new Uint8Array(readData.data);
 	return { resolution, pixelData };
 }

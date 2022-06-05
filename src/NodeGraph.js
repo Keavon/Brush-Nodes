@@ -592,7 +592,7 @@ function updateSelectionOutline(nodeData) {
 	nodeData.selected.style.borderRadius = `${4 * scale}px`;
 }
 
-function updateGraphView() {
+export function updateGraphView() {
 	if (!awaitingGraphViewUpdate) {
 		requestAnimationFrame(() => {
 			nodeDatabase.forEach((node) => {
@@ -603,8 +603,6 @@ function updateGraphView() {
 	}
 	awaitingGraphViewUpdate = true;
 }
-// Hacky quick solution, exporting this normally causes an infinite loop
-window.updateGraphView = updateGraphView;
 
 function updateNodePosition(nodeData) {
 	nodeData.element.style.transform = `scale(${graphScale}) translate(${nodeData.x + graphOffsetX}px, ${nodeData.y + graphOffsetY}px)`;
