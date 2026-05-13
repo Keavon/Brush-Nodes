@@ -25,7 +25,7 @@ export function createWidget(nodeData, row) {
 
 export function updateElementDisplayValue(nodeData, row) {
 	const rowElement = nodeData.element.querySelector(`.row[data-name="${row.name}"]`);
-	rowElement.querySelector("select").value = row.data.inputValue;
+	rowElement.querySelector("select").value = nodeData.rowData[row.name].inputValue;
 }
 
 export function resetRowDataToPropertyValue(nodeData, rowData, rowDefinition) {

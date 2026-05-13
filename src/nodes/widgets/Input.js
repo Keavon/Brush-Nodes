@@ -99,7 +99,7 @@ export function createWidget(nodeData, row, definition) {
 
 export function updateElementDisplayValue(nodeData, row) {
 	const rowElement = nodeData.element.querySelector(`.row[data-name="${row.name}"]`);
-	rowElement.querySelector("input").value = row.data.inputValue;
+	rowElement.querySelector("input").value = nodeData.rowData[row.name].inputValue;
 }
 
 export function resetRowDataToPropertyValue(nodeData, rowData, rowDefinition) {
