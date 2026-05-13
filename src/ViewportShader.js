@@ -220,6 +220,16 @@ export async function set3DProgramMesh(meshName) {
 	const gl = viewport3D.canvas.getContext("webgl2");
 	if (viewport3D.program) initializeViewportProgram(gl, viewport3D.program, viewport3D.uniforms, viewport3D.textures, viewport3D.mesh, drawingStroke);
 
+	// The Plane mesh culls back-faces so displaced peaks don't show through their own back sides.
+	// Other meshes (Stroke) and other viewports (2D, Strip) intentionally render both sides.
+	if (drawingStroke) {
+		gl.disable(gl.CULL_FACE);
+	} else {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.BACK);
+		gl.frontFace(gl.CCW);
+	}
+
 	spinning = meshName === "Plane";
 }
 
@@ -317,6 +327,7 @@ function initializeViewportProgram(gl, program, uniforms, textures, mesh, drawin
 		gl.blendEquation(gl.MIN);
 	} else {
 		gl.enable(gl.DEPTH_TEST);
+		gl.disable(gl.BLEND);
 	}
 
 	// Locate uniforms
@@ -404,7 +415,7 @@ function draw(gl, viewport, clearColor = [0, 0, 0, 1]) {
 	});
 
 	gl.clearColor(...clearColor);
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	gl.drawElements(gl.TRIANGLES, viewport.mesh.indices.length, gl.UNSIGNED_SHORT, 0);
 }
