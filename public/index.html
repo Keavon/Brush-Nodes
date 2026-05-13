@@ -1,26 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-	<meta charset="utf-8">
-	<title>Brush Nodes</title>
-	<link href="https://fonts.googleapis.com/css?family=Yantramanav:300,400,500" rel="stylesheet">
-</head>
-<body>
-	<div class="node-graph">
-		<span class="instructions">Add nodes with hotkeys: (G) Gradient, (P) Perlin Noise, (V) Voronoi Noise, (B) Blend, (L) Levels, (S) Slicer, (T) Transform | New Graph: Ctrl + Delete</span>
-		<svg class="wires"></svg>
-	</div>
-	<div class="viewport-strip">
-		<canvas></canvas>
-	</div>
-	<div class="material-viewports">
-		<div class="viewport-3d">
+	<head>
+		<meta charset="utf-8" />
+		<title>Brush Nodes</title>
+		<link href="https://fonts.googleapis.com/css?family=Yantramanav:300,400,500" rel="stylesheet" />
+	</head>
+	<body>
+		<div class="node-graph">
+			<div class="toolbar">
+				<select class="preset-dropdown" title="Load preset"></select>
+				<button class="add-node-button" data-node-name="Gradient" title="Add a Gradient node (shortcut: G)">[G]radient</button>
+				<button class="add-node-button" data-node-name="Perlin Noise" title="Add a Perlin Noise node (shortcut: P)">[P]erlin Noise</button>
+				<button class="add-node-button" data-node-name="Voronoi Noise" title="Add a Voronoi Noise node (shortcut: V)">[V]oronoi Noise</button>
+				<button class="add-node-button" data-node-name="Blend" title="Add a Blend node (shortcut: B)">[B]lend</button>
+				<button class="add-node-button" data-node-name="Levels" title="Add a Levels node (shortcut: L)">[L]evels</button>
+				<button class="add-node-button" data-node-name="Slicer" title="Add a Slicer node (shortcut: S)">[S]licer</button>
+				<button class="add-node-button" data-node-name="Transform" title="Add a Transform node (shortcut: T)">[T]ransform</button>
+			</div>
+			<svg class="wires"></svg>
+		</div>
+		<div class="viewport-strip">
 			<canvas></canvas>
 		</div>
-		<div class="viewport-2d">
-			<canvas></canvas>
+		<div class="material-viewports">
+			<div class="viewport-3d">
+				<canvas></canvas>
+			</div>
+			<div class="viewport-2d">
+				<canvas></canvas>
+			</div>
 		</div>
-	</div>
-	<script src="bundle.js"></script>
-</body>
+		<script src="bundle.js"></script>
+	</body>
 </html>

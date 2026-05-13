@@ -22,15 +22,30 @@ body {
 	font-size: 12px;
 	user-select: none;
 
-	.instructions {
-		display: block;
+	.toolbar {
 		position: absolute;
 		top: 10px;
-		left: 0;
-		right: 0;
+		left: 10px;
+		z-index: 10;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.preset-dropdown,
+	.add-node-button {
+		background: hsl(0, 0%, 20%);
 		color: white;
-		font-size: 16px;
-		text-align: center;
+		border: 1px solid hsl(0, 0%, 30%);
+		padding: 4px 8px;
+		font-family: inherit;
+		font-size: 14px;
+		cursor: pointer;
+
+		&:hover {
+			background: hsl(0, 0%, 25%);
+		}
 	}
 }
 

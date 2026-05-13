@@ -1,10 +1,5 @@
 import * as Node from "@/Node.js";
-import Demo from "@/Demo.js";
-
-import Style1 from "@/data/1_dotted_stamp_roller.json";
-import Style2 from "@/data/2_bristle_brush.json";
-import Style3 from "@/data/3_diluted_ink.json";
-import Style4 from "@/data/4_ragged_solid_ink_brush.json";
+import { presets, findPresetBySlug } from "@/Presets.js";
 
 const nodeDatabase = [];
 
@@ -23,18 +18,118 @@ let graphOffsetY = 0;
 let graphScale = 1;
 
 const storageKey = "save_document";
+const presetSlugStorageKey = "save_preset_slug";
+const defaultPresetSlug = "new-graph";
 
 export default function NodeGraph() {
 	setupEvents();
+	setupPresetDropdown();
+	setupAddNodeButtons();
 
-	const demoHappened = Demo();
-	if (demoHappened) return;
+	// A preset slug in the URL hash overrides anything currently in localStorage
+	const hashSlug = window.location.hash.slice(1);
+	const presetFromHash = hashSlug && findPresetBySlug(hashSlug);
 
-	const previousDocument = localStorage.getItem(storageKey);
-	if (previousDocument) loadGraph(JSON.parse(previousDocument));
-	else defaultGraph();
+	if (presetFromHash) {
+		applyPreset(presetFromHash);
+		// Strip the hash from the URL after consuming it so refresh falls back to localStorage
+		history.replaceState(null, "", window.location.pathname + window.location.search);
+	}
+	else {
+		const previousDocument = localStorage.getItem(storageKey);
+		if (previousDocument) {
+			loadGraph(JSON.parse(previousDocument));
+			const savedSlug = localStorage.getItem(presetSlugStorageKey);
+			if (savedSlug && findPresetBySlug(savedSlug)) setPresetDropdownSelection(savedSlug);
+			else refreshPresetDropdownLabels();
+		}
+		else {
+			applyPreset(findPresetBySlug(defaultPresetSlug));
+		}
+	}
 
 	updateGraphView();
+}
+
+function applyPreset(preset) {
+	if (!preset) return;
+
+	clearGraph();
+	loadGraph(preset.data);
+	// A freshly loaded preset is unmodified, so wipe any prior edits from localStorage
+	localStorage.removeItem(storageKey);
+	localStorage.setItem(presetSlugStorageKey, preset.slug);
+	setPresetDropdownSelection(preset.slug);
+	updateGraphView();
+}
+
+function clearGraph() {
+	// Copy the array since removeNode mutates nodeDatabase
+	const allNodes = nodeDatabase.slice();
+	allNodes.forEach((nodeData) => removeNode(nodeData));
+}
+
+const dirtyValueSuffix = "__dirty";
+
+function setupPresetDropdown() {
+	const dropdown = document.querySelector(".preset-dropdown");
+	if (!dropdown) return;
+
+	// Each preset has two options: a visible "clean" one (always in the list) and a hidden
+	// "dirty" one that's only selected when localStorage holds edits. Showing the dirty
+	// option as selected (asterisk) while keeping the clean option pickable makes re-picking
+	// the same preset a real value transition, so `change` fires normally.
+	presets.forEach((preset) => {
+		const cleanOption = document.createElement("option");
+		cleanOption.value = preset.slug;
+		cleanOption.textContent = preset.name;
+		dropdown.appendChild(cleanOption);
+
+		const dirtyOption = document.createElement("option");
+		dirtyOption.value = preset.slug + dirtyValueSuffix;
+		dirtyOption.textContent = `${preset.name} *`;
+		dirtyOption.hidden = true;
+		dropdown.appendChild(dirtyOption);
+	});
+
+	dropdown.addEventListener("change", (event) => {
+		const slug = baseSlugFromOptionValue(event.target.value);
+		const preset = findPresetBySlug(slug);
+		if (preset) applyPreset(preset);
+	});
+}
+
+function baseSlugFromOptionValue(value) {
+	return value.endsWith(dirtyValueSuffix) ? value.slice(0, -dirtyValueSuffix.length) : value;
+}
+
+function setupAddNodeButtons() {
+	document.querySelectorAll(".add-node-button[data-node-name]").forEach((button) => {
+		button.addEventListener("click", () => {
+			addNode(button.dataset.nodeName);
+			saveGraph();
+		});
+	});
+}
+
+function setPresetDropdownSelection(slug) {
+	const dropdown = document.querySelector(".preset-dropdown");
+	if (!dropdown) return;
+	dropdown.value = slug;
+	refreshPresetDropdownLabels();
+}
+
+// Switch between the clean and dirty options for the currently-selected preset depending on
+// whether localStorage holds user edits.
+function refreshPresetDropdownLabels() {
+	const dropdown = document.querySelector(".preset-dropdown");
+	if (!dropdown) return;
+
+	const baseSlug = baseSlugFromOptionValue(dropdown.value);
+	if (!findPresetBySlug(baseSlug)) return;
+
+	const edited = localStorage.getItem(storageKey) !== null;
+	dropdown.value = edited ? baseSlug + dirtyValueSuffix : baseSlug;
 }
 
 export function saveGraph() {
@@ -64,6 +159,7 @@ export function saveGraph() {
 
 	const data = { nodes, connections };
 	localStorage[storageKey] = JSON.stringify(data);
+	refreshPresetDropdownLabels();
 }
 
 function loadGraph(graph) {
@@ -82,31 +178,6 @@ function loadGraph(graph) {
 	});
 }
 
-function defaultGraph() {
-	// const perlin = addNode("Perlin Noise", 50, 50);
-	// const gradient = addNode("Gradient", 50, 50);
-	// const levels = addNode("Levels", 400, 50);
-	// const voronoi = addNode("Voronoi Noise", 50, 50);
-	// const blend = addNode("Blend", 50, 50);
-
-	// const input = addNode("Input", 50, 50);
-	// const slicer = addNode("Slicer", 800, 50);
-	// const gradient1 = addNode("Gradient", 50, 350);
-	// const gradient2 = addNode("Gradient", 50, 800);
-	// const blend = addNode("Blend", 400, 600);
-	// const output = addNode("Output", 1200, 50);
-
-	// connectWire(input, "pressure", slicer, "depth");
-	// connectWire(gradient1, "gradient", blend, "foreground");
-	// connectWire(gradient2, "gradient", blend, "background");
-	// connectWire(blend, "composite", slicer, "sliceable");
-	// connectWire(slicer, "streak", output, "diffuse");
-
-	const input = addNode("Input", 50, 50);
-	const output = addNode("Output", 500, 50);
-	connectWire(input, "pressure", output, "diffuse");
-}
-
 function setupEvents() {
 	// const nodeGraph = document.querySelector(".node-graph");
 	const nodeGraph = document.body;
@@ -119,6 +190,9 @@ function setupEvents() {
 }
 
 function graphMousedownHandler(event) {
+	// Ignore clicks on toolbar controls so they don't deselect nodes or initiate a pan
+	if (event.target.closest(".toolbar")) return;
+
 	const target = event.target;
 	dragInitiationTarget = target;
 
@@ -434,28 +508,7 @@ function graphKeydownHandler(event) {
 	}
 
 	if (event.key.toLowerCase() === "backspace" || event.key.toLowerCase() === "delete") {
-		if (event.ctrlKey) localStorage.removeItem(storageKey);
-		else if (document.activeElement.tagName !== "INPUT") removeSelectedNodes();
-	}
-
-	if (event.key.toLowerCase() === "1" && event.ctrlKey) {
-		localStorage.setItem(storageKey, JSON.stringify(Style1));
-		event.preventDefault();
-	}
-
-	if (event.key.toLowerCase() === "2" && event.ctrlKey) {
-		localStorage.setItem(storageKey, JSON.stringify(Style2));
-		event.preventDefault();
-	}
-
-	if (event.key.toLowerCase() === "3" && event.ctrlKey) {
-		localStorage.setItem(storageKey, JSON.stringify(Style3));
-		event.preventDefault();
-	}
-
-	if (event.key.toLowerCase() === "4" && event.ctrlKey) {
-		localStorage.setItem(storageKey, JSON.stringify(Style4));
-		event.preventDefault();
+		if (document.activeElement.tagName !== "INPUT") removeSelectedNodes();
 	}
 }
 
@@ -473,48 +526,23 @@ export function addNode(nodeName, x, y, startSelected = false) {
 }
 
 export function removeNode(nodeData) {
-	// Disallow removing the single output node
-	if (nodeData.name === "Input" || nodeData.name === "Output") return;
+	// Collect every wire touching this node first, then disconnect (since disconnectWire mutates the connection arrays).
+	// Each connection record already stores the counterpart's identifier, so no scanning is needed.
+	const toDisconnect = [];
 
-	// Keep a list of every in and out connection to remove at the end
-	const inConnectionsToRemove = [];
-	const outConnectionsToRemove = [];
-
-	// Find all wires connected as inputs to remove
-	Object.keys(nodeData.inConnections).forEach((connectorName) => {
-		const connector = nodeData.inConnections[connectorName];
-		connector.forEach((connection) => {
-			const outNodeConnectors = connection.node.outConnections;
-			Object.keys(outNodeConnectors).forEach((outConnectorName) => {
-				const outConnector = outNodeConnectors[outConnectorName];
-				outConnector.forEach((outConnection) => {
-					if (outConnection.identifier === connectorName && outConnection.node === nodeData) {
-						inConnectionsToRemove.push([connection.node, outConnectorName, nodeData, connectorName]);
-					}
-				});
-			});
+	Object.entries(nodeData.inConnections).forEach(([inIdentifier, incomingWires]) => {
+		incomingWires.forEach((connection) => {
+			toDisconnect.push([connection.node, connection.identifier, nodeData, inIdentifier]);
 		});
 	});
 
-	// Find all wires connected as outputs to remove
-	Object.keys(nodeData.outConnections).forEach((connectorName) => {
-		const connector = nodeData.outConnections[connectorName];
-		connector.forEach((connection) => {
-			const inNodeConnectors = connection.node.inConnections;
-			Object.keys(inNodeConnectors).forEach((inConnectorName) => {
-				const inConnector = inNodeConnectors[inConnectorName];
-				inConnector.forEach((inConnection) => {
-					if (inConnection.identifier === connectorName && inConnection.node === nodeData) {
-						outConnectionsToRemove.push([nodeData, connectorName, connection.node, inConnectorName]);
-					}
-				});
-			});
+	Object.entries(nodeData.outConnections).forEach(([outIdentifier, outgoingWires]) => {
+		outgoingWires.forEach((connection) => {
+			toDisconnect.push([nodeData, outIdentifier, connection.node, connection.identifier]);
 		});
 	});
 
-	// Now remove those found connections once the looping is over
-	inConnectionsToRemove.map((toRemove) => disconnectWire(...toRemove));
-	outConnectionsToRemove.map((toRemove) => disconnectWire(...toRemove));
+	toDisconnect.forEach((args) => disconnectWire(...args));
 
 	// Deselect the node to remove the selection outline element
 	deselectNode(nodeData);
@@ -527,7 +555,10 @@ export function removeNode(nodeData) {
 }
 
 function removeSelectedNodes() {
-	nodeDatabase.filter(node => node.selected).map((nodeData) => removeNode(nodeData));
+	// The Input and Output nodes are protected from user deletion since they're the graph's endpoints
+	nodeDatabase
+		.filter((node) => node.selected && node.name !== "Input" && node.name !== "Output")
+		.forEach((nodeData) => removeNode(nodeData));
 	saveGraph();
 }
 
