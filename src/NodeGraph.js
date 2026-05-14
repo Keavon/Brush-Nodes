@@ -11,6 +11,9 @@ let selectionWasDragged = false;
 let dragInitiationTarget;
 
 let panningSelection = false;
+let zooming = false;
+let zoomingOriginX = 0;
+let zoomingOriginY = 0;
 let awaitingGraphViewUpdate = false;
 
 let graphOffsetX = 0;
@@ -221,6 +224,12 @@ function setupEvents() {
 	nodeGraph.addEventListener("click", graphClickHandler);
 	nodeGraph.addEventListener("wheel", graphWheelHandler, { passive: false });
 	nodeGraph.addEventListener("keydown", graphKeydownHandler);
+	nodeGraph.addEventListener("contextmenu", graphContextMenuHandler);
+}
+
+function graphContextMenuHandler(event) {
+	if (event.target.closest(".toolbar") || event.target.closest("input")) return;
+	event.preventDefault();
 }
 
 function graphMousedownHandler(event) {
@@ -342,6 +351,15 @@ function graphMousedownHandler(event) {
 			return;
 		}
 	}
+
+	// Right mouse button: drag up/down to zoom, anchored at the click point
+	if (event.button === 2) {
+		zooming = true;
+		zoomingOriginX = event.clientX;
+		zoomingOriginY = event.clientY;
+		event.preventDefault();
+		return;
+	}
 }
 
 function graphMousemoveHandler(event) {
@@ -352,6 +370,11 @@ function graphMousemoveHandler(event) {
 		graphOffsetX += mouseDelta[0];
 		graphOffsetY += mouseDelta[1];
 		updateGraphView();
+	}
+
+	if (zooming && event.movementY !== 0) {
+		applyDragZoom(event.movementY);
+		event.preventDefault();
 	}
 
 	if (draggingSelection) {
@@ -427,6 +450,12 @@ function graphMouseupHandler(event) {
 			return;
 		}
 	}
+
+	// Stop right-click drag zoom
+	if (event.button === 2 && zooming) {
+		zooming = false;
+		return;
+	}
 }
 
 function graphClickHandler(event) {
@@ -440,37 +469,47 @@ function graphClickHandler(event) {
 	}
 }
 
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 6.0;
+
+// Apply a zoom by `signedDelta` units, anchored on the cursor position `(anchorX, anchorY)` in
+// client coordinates. Positive `signedDelta` zooms out, negative zooms in. `rate` controls the
+// per-unit zoom speed (smaller values give finer control).
+function applyZoom(signedDelta, anchorX, anchorY, rate) {
+	let zoomFactor = 1 + Math.abs(signedDelta) * rate;
+	if (signedDelta > 0) zoomFactor = 1 / zoomFactor;
+
+	zoomFactor = Math.min(Math.max(graphScale * zoomFactor, MIN_SCALE), MAX_SCALE) / graphScale;
+
+	graphScale *= zoomFactor;
+
+	const { x, y, width, height } = document.body.getBoundingClientRect();
+	const deltaSizeX = width - width / zoomFactor;
+	const deltaSizeY = height - height / zoomFactor;
+
+	// Keep the anchor point fixed in screen space as we zoom
+	const deltaX = deltaSizeX * ((anchorX - x) / width);
+	const deltaY = deltaSizeY * ((anchorY - y) / height);
+	graphOffsetX -= (deltaX / graphScale) * zoomFactor;
+	graphOffsetY -= (deltaY / graphScale) * zoomFactor;
+
+	updateGraphView();
+}
+
+// Drag downward zooms out (positive deltaY), drag upward zooms in (negative deltaY)
+function applyDragZoom(deltaY) {
+	applyZoom(deltaY, zoomingOriginX, zoomingOriginY, 1 / 200);
+}
+
 function graphWheelHandler(event) {
-	const minScale = 0.1;
-	const maxScale = 6.0;
 	const SCALE_SPEED = 0.5;
 	const WHEEL_RATE = 1 / 600;
 
 	if (event.ctrlKey) {
 		// Prevent the default browser zoom behavior
 		event.preventDefault();
-
-		// Calculate a zoom factor as a scalar multiplier of the current zoom
-		const scroll = event.deltaY;
-		let zoomFactor = 1 + Math.abs(scroll) * WHEEL_RATE;
-		if (scroll > 0) zoomFactor = 1 / zoomFactor;
-
-		// Clamp zoom factor to the min and max scale
-		zoomFactor = Math.min(Math.max(graphScale * zoomFactor, minScale), maxScale) / graphScale;
-
-		graphScale *= zoomFactor;
-
-		const { x, y, width, height } = event.target.closest("body").getBoundingClientRect();
-
-		// Calculate the change in size in viewport
-		const deltaSizeX = width - width / zoomFactor;
-		const deltaSizeY = height - height / zoomFactor;
-
-		// Apply a position adjustment to keep mouse centred
-		const deltaX = deltaSizeX * ((event.x - x) / width);
-		const deltaY = deltaSizeY * ((event.y - y) / height);
-		graphOffsetX -= (deltaX / graphScale) * zoomFactor;
-		graphOffsetY -= (deltaY / graphScale) * zoomFactor;
+		applyZoom(event.deltaY, event.x, event.y, WHEEL_RATE);
+		return;
 	} else {
 		// Shift flips axis
 		if (event.shiftKey) {
