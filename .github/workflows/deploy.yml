@@ -14,16 +14,17 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - name: Use Node.js 20
-              uses: actions/setup-node@v4
+            - name: Use Node.js 22
+              uses: actions/setup-node@v6
               with:
-                  node-version: 20
+                  node-version: 22
+                  cache: npm
 
             - name: Setup Pages
               id: pages
-              uses: actions/configure-pages@v4
+              uses: actions/configure-pages@v6
 
             - name: Build
               run: |
@@ -31,7 +32,7 @@ jobs:
                   npm run build
 
             - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
+              uses: actions/upload-pages-artifact@v5
               with:
                   path: ./dist
 
@@ -44,4 +45,4 @@ jobs:
         steps:
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v4
+              uses: actions/deploy-pages@v5

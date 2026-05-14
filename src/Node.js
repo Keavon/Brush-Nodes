@@ -1,15 +1,15 @@
-import * as NodeGraph from "@/NodeGraph";
+import * as NodeGraph from "./NodeGraph";
 
-import * as Node_PerlinNoise from "@/nodes/PerlinNoise.js";
-import * as Node_VoronoiNoise from "@/nodes/VoronoiNoise.js";
-import * as Node_Gradient from "@/nodes/Gradient.js";
-import * as Node_Blend from "@/nodes/Blend.js";
-import * as Node_Levels from "@/nodes/Levels.js";
-import * as Node_Slicer from "@/nodes/Slicer.js";
-import * as Node_Color from "@/nodes/Color.js";
-import * as Node_Input from "@/nodes/Input.js";
-import * as Node_Output from "@/nodes/Output.js";
-import * as Node_Transform from "@/nodes/Transform.js";
+import * as Node_PerlinNoise from "./nodes/PerlinNoise.js";
+import * as Node_VoronoiNoise from "./nodes/VoronoiNoise.js";
+import * as Node_Gradient from "./nodes/Gradient.js";
+import * as Node_Blend from "./nodes/Blend.js";
+import * as Node_Levels from "./nodes/Levels.js";
+import * as Node_Slicer from "./nodes/Slicer.js";
+import * as Node_Color from "./nodes/Color.js";
+import * as Node_Input from "./nodes/Input.js";
+import * as Node_Output from "./nodes/Output.js";
+import * as Node_Transform from "./nodes/Transform.js";
 const nodes = {
 	"Perlin Noise": Node_PerlinNoise,
 	"Voronoi Noise": Node_VoronoiNoise,
@@ -23,12 +23,12 @@ const nodes = {
 	"Transform": Node_Transform,
 };
 
-import * as Widget_Spacer from "@/nodes/widgets/Spacer.js";
-import * as Widget_Thumbnail from "@/nodes/widgets/Thumbnail.js";
-import * as Widget_Label from "@/nodes/widgets/Label.js";
-import * as Widget_Input from "@/nodes/widgets/Input.js";
-import * as Widget_Dropdown from "@/nodes/widgets/Dropdown.js";
-import * as Widget_Output from "@/nodes/widgets/Output.js";
+import * as Widget_Spacer from "./nodes/widgets/Spacer.js";
+import * as Widget_Thumbnail from "./nodes/widgets/Thumbnail.js";
+import * as Widget_Label from "./nodes/widgets/Label.js";
+import * as Widget_Input from "./nodes/widgets/Input.js";
+import * as Widget_Dropdown from "./nodes/widgets/Dropdown.js";
+import * as Widget_Output from "./nodes/widgets/Output.js";
 const widgets = {
 	"Spacer": Widget_Spacer,
 	"Thumbnail": Widget_Thumbnail,

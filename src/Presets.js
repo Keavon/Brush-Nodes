@@ -1,11 +1,11 @@
-import NewGraph from "@/data/new-graph.json";
-import Material2Octaves from "@/data/material-2-octaves.json";
-import Material3Octaves from "@/data/material-3-octaves.json";
-import MaterialComplex from "@/data/material-complex.json";
-import BrushDottedStampRoller from "@/data/brush-dotted-stamp-roller.json";
-import BrushBristles from "@/data/brush-bristles.json";
-import BrushDilutedInk from "@/data/brush-diluted-ink.json";
-import BrushRaggedSolidInk from "@/data/brush-ragged-solid-ink.json";
+import NewGraph from "./data/new-graph.json";
+import Material2Octaves from "./data/material-2-octaves.json";
+import Material3Octaves from "./data/material-3-octaves.json";
+import MaterialComplex from "./data/material-complex.json";
+import BrushDottedStampRoller from "./data/brush-dotted-stamp-roller.json";
+import BrushBristles from "./data/brush-bristles.json";
+import BrushDilutedInk from "./data/brush-diluted-ink.json";
+import BrushRaggedSolidInk from "./data/brush-ragged-solid-ink.json";
 
 export const presets = [
 	{ slug: "new-graph", name: "New Graph", data: NewGraph },

@@ -1,17 +1,16 @@
-import { OBJ } from "webgl-obj-loader";
+import Viewport3DVert from "./shaders/Viewport3D.vert.glsl";
+import Viewport3DFrag from "./shaders/Viewport3D.frag.glsl";
+import Viewport2DVert from "./shaders/Viewport2D.vert.glsl";
+import Viewport2DFrag from "./shaders/Viewport2D.frag.glsl";
+import ViewportStripVert from "./shaders/ViewportStrip.vert.glsl";
+import ViewportStripFrag from "./shaders/ViewportStrip.frag.glsl";
 
-import Viewport3DVert from "@/shaders/Viewport3D.vert.glsl";
-import Viewport3DFrag from "@/shaders/Viewport3D.frag.glsl";
-import Viewport2DVert from "@/shaders/Viewport2D.vert.glsl";
-import Viewport2DFrag from "@/shaders/Viewport2D.frag.glsl";
-import ViewportStripVert from "@/shaders/ViewportStrip.vert.glsl";
-import ViewportStripFrag from "@/shaders/ViewportStrip.frag.glsl";
+import * as Shader from "./Shader.js";
+import * as Mat4 from "./Mat4.js";
 
-import * as Shader from "@/Shader.js";
-import * as Mat4 from "@/Mat4.js";
-
-import PlaneOBJ from "@/meshes/plane.obj";
-import StrokeOBJ from "@/meshes/stroke.obj";
+// The `obj-as-mesh` Vite plugin parses these at build time so the imports yield `{ vertices, textures, vertexNormals, indices }`
+import planeMesh from "./meshes/plane.obj";
+import strokeMesh from "./meshes/stroke.obj";
 
 // Viewports
 const viewport3D = {};
@@ -30,12 +29,6 @@ viewportStrip.program = null;
 
 // Meshes
 viewport3D.mesh = null;
-let planeMeshLoadResolve;
-let planeMeshLoaded = new Promise((resolve) => { planeMeshLoadResolve = resolve; });
-let planeMesh;
-let strokeMeshLoadResolve;
-let strokeMeshLoaded = new Promise((resolve) => { strokeMeshLoadResolve = resolve; });
-let strokeMesh;
 
 let spinning = true;
 
@@ -180,8 +173,8 @@ export default function ViewportShader() {
 	setupAndRenderStrip();
 }
 
-async function setupAndRender3D() {
-	await setup3D();
+function setupAndRender3D() {
+	setup3D();
 	render3D();
 }
 
@@ -195,24 +188,14 @@ function setupAndRenderStrip() {
 	renderStrip();
 }
 
-async function setup3D() {
+function setup3D() {
 	const gl = viewport3D.canvas.getContext("webgl2");
 	viewport3D.program = Shader.createProgram(gl, Viewport3DVert, Viewport3DFrag);
 
-	const planeSource = await (await fetch(PlaneOBJ)).text();
-	const strokeSource = await (await fetch(StrokeOBJ)).text();
-
-	planeMesh = new OBJ.Mesh(planeSource);
-	strokeMesh = new OBJ.Mesh(strokeSource);
-	planeMeshLoadResolve();
-	strokeMeshLoadResolve();
-
-	await set3DProgramMesh("Init");
+	set3DProgramMesh("Init");
 }
 
-export async function set3DProgramMesh(meshName) {
-	await Promise.all([planeMeshLoaded, strokeMeshLoaded]);
-
+export function set3DProgramMesh(meshName) {
 	if (meshName === "Init" && viewport3D.mesh) return;
 	viewport3D.mesh = { "Init": planeMesh, "Plane": planeMesh, "Stroke": strokeMesh }[meshName];
 	const drawingStroke = meshName === "Stroke";

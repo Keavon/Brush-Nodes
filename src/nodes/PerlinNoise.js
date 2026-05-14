@@ -1,9 +1,9 @@
-import * as Node from "@/Node.js";
-import * as Shader from "@/Shader.js";
-import * as NodeShader from "@/NodeShader.js";
+import * as Node from "../Node.js";
+import * as Shader from "../Shader.js";
+import * as NodeShader from "../NodeShader.js";
 
-import BillboardVert from "@/shaders/Billboard.vert.glsl";
-import PerlinNoiseFrag from "@/shaders/PerlinNoise.frag.glsl";
+import BillboardVert from "../shaders/Billboard.vert.glsl";
+import PerlinNoiseFrag from "../shaders/PerlinNoise.frag.glsl";
 
 let program;
 let gl;

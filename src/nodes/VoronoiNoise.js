@@ -1,9 +1,9 @@
-import * as Node from "@/Node.js";
-import * as Shader from "@/Shader.js";
-import * as NodeShader from "@/NodeShader.js";
+import * as Node from "../Node.js";
+import * as Shader from "../Shader.js";
+import * as NodeShader from "../NodeShader.js";
 
-import BillboardVert from "@/shaders/Billboard.vert.glsl";
-import VoronoiNoiseFrag from "@/shaders/VoronoiNoise.frag.glsl";
+import BillboardVert from "../shaders/Billboard.vert.glsl";
+import VoronoiNoiseFrag from "../shaders/VoronoiNoise.frag.glsl";
 
 let program;
 let gl;

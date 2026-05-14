@@ -1,5 +1,5 @@
-import * as Node from "@/Node.js";
-import * as ViewportShader from "@/ViewportShader.js";
+import * as Node from "../Node.js";
+import * as ViewportShader from "../ViewportShader.js";
 
 const definition = {
 	name: "Output",

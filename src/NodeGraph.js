@@ -1,5 +1,5 @@
-import * as Node from "@/Node.js";
-import { presets, findPresetBySlug } from "@/Presets.js";
+import * as Node from "./Node.js";
+import { presets, findPresetBySlug } from "./Presets.js";
 
 const nodeDatabase = [];
 

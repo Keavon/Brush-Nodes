@@ -1,4 +1,4 @@
-import * as Vector3 from "@/Vector3.js";
+import * as Vector3 from "./Vector3.js";
 
 export function identity() {
 	return [

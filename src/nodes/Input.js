@@ -1,5 +1,5 @@
-import * as Node from "@/Node.js";
-import SampleInput from "@/data/sample-input.json";
+import * as Node from "../Node.js";
+import SampleInput from "../data/sample-input.json";
 
 let pressureStrip;
 let altitudeStrip;
@@ -113,7 +113,6 @@ export function setup() {
 		foo.push(result);
 		return result;
 	});
-	console.log(foo);
 
 	pressureStrip = makeStripTexture(resolution, SampleInput.pressure);
 	altitudeStrip = makeStripTexture(resolution, SampleInput.altitude, Math.PI / 2); // 0 (parallel to surface) to π/2 (normal to surface)

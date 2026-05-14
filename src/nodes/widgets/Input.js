@@ -1,4 +1,4 @@
-import * as Node from "@/Node.js";
+import * as Node from "../../Node.js";
 
 export function getPropertyValue(nodeData, identifier, definition) {
 	const row = definition.rows.find(row => row.options && row.options.inputBoundIdentifier === identifier);
