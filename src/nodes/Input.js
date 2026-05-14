@@ -1,4 +1,5 @@
 import * as Node from "../Node.js";
+import * as NodeShader from "../NodeShader.js";
 import SampleInput from "../data/sample-input.json";
 
 let pressureStrip;
@@ -114,9 +115,10 @@ export function setup() {
 		return result;
 	});
 
-	pressureStrip = makeStripTexture(resolution, SampleInput.pressure);
-	altitudeStrip = makeStripTexture(resolution, SampleInput.altitude, Math.PI / 2); // 0 (parallel to surface) to π/2 (normal to surface)
-	progradeStrip = makeStripTexture(resolution, progradeSamples); // 0.5 is prograde, 0 and 1 are retrograde, 0.25 and 0.75 are perpendicular in either direction
+	const gl = NodeShader.createGLContext();
+	pressureStrip = makeStripTexture(gl, resolution, SampleInput.pressure);
+	altitudeStrip = makeStripTexture(gl, resolution, SampleInput.altitude, Math.PI / 2); // 0 (parallel to surface) to π/2 (normal to surface)
+	progradeStrip = makeStripTexture(gl, resolution, progradeSamples); // 0.5 is prograde, 0 and 1 are retrograde, 0.25 and 0.75 are perpendicular in either direction
 }
 
 export function compute(nodeData) {
@@ -125,7 +127,7 @@ export function compute(nodeData) {
 	Node.setPropertyValue(nodeData, "prograde", progradeStrip);
 }
 
-function makeStripTexture(resolution, data, range = 1) {
+function makeStripTexture(gl, resolution, data, range = 1) {
 	const [width, height] = resolution;
 
 	const smallCanvas = document.createElement("canvas");
@@ -150,5 +152,8 @@ function makeStripTexture(resolution, data, range = 1) {
 
 	const readData = bigContext.getImageData(0, 0, width, height);
 	const pixelData = new Uint8Array(readData.data);
-	return { resolution, pixelData };
+
+	// Upload once to a GPU-resident texture so downstream nodes can sample without re-uploading
+	const texture = NodeShader.uploadPixelDataToTexture(gl, pixelData, resolution);
+	return { resolution, texture };
 }

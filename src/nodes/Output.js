@@ -1,4 +1,5 @@
 import * as Node from "../Node.js";
+import * as NodeShader from "../NodeShader.js";
 import * as ViewportShader from "../ViewportShader.js";
 
 const definition = {
@@ -70,6 +71,11 @@ export function getDefinition() {
 }
 
 export function compute(nodeData) {
+	// The viewport canvases are separate WebGL contexts, so we can't share textures with them.
+	// Read the upstream texture back to a CPU buffer here (the one unavoidable full-resolution
+	// readPixels per output channel) and hand it to ViewportShader as pixelData.
+	const gl = NodeShader.createGLContext();
+
 	Object.values(definition.rows).forEach((row) => {
 		if (row.name === "displacement_scale_factor") {
 			ViewportShader.updateDisplacementScale(row.data.inputValue);
@@ -79,7 +85,14 @@ export function compute(nodeData) {
 
 		const identifier = row.options.outputBoundIdentifier;
 		const image = Node.getInPropertyValue(nodeData, identifier);
-		ViewportShader.updateImage(row.options.textureUniformName, image);
+
+		let viewportImage = image;
+		if (image && image.texture && !image.pixelData) {
+			const pixelData = NodeShader.readPixelsFromTexture(gl, image.texture, image.resolution[0], image.resolution[1]);
+			viewportImage = { resolution: image.resolution, pixelData };
+		}
+
+		ViewportShader.updateImage(row.options.textureUniformName, viewportImage);
 	});
 
 	const inputTexture = nodeData.inConnections.diffuse[0];
