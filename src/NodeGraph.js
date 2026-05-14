@@ -165,6 +165,8 @@ export function saveGraph() {
 function loadGraph(graph) {
 	const { nodes, connections } = graph;
 
+	Node.setComputeSuspended(true);
+
 	const spawnedNodes = nodes.map((nodeData) => {
 		const node = addNode(nodeData.name, nodeData.x, nodeData.y);
 		nodeData.rowData.forEach(({ identifier, inputValue }) => {
@@ -176,6 +178,38 @@ function loadGraph(graph) {
 	connections.forEach(({ inNodeIndex, inIdentifier, outNodeIndex, outIdentifier }) => {
 		connectWire(spawnedNodes[inNodeIndex], inIdentifier, spawnedNodes[outNodeIndex], outIdentifier);
 	});
+
+	Node.setComputeSuspended(false);
+
+	recomputeInTopologicalOrder(spawnedNodes);
+}
+
+// Kahn's algorithm: process roots first, then anything whose remaining upstream deps are now done.
+// Each node's `compute()` runs exactly once, in an order where its inputs are guaranteed to be ready.
+function recomputeInTopologicalOrder(nodes) {
+	const inDegree = new Map();
+	nodes.forEach((node) => {
+		let count = 0;
+		Object.values(node.inConnections).forEach((wires) => { count += wires.length; });
+		inDegree.set(node, count);
+	});
+
+	const ready = nodes.filter((node) => inDegree.get(node) === 0);
+
+	while (ready.length > 0) {
+		const current = ready.shift();
+		Node.recomputeProperties(current);
+
+		Object.values(current.outConnections).forEach((wires) => {
+			wires.forEach((connection) => {
+				const downstream = connection.node;
+				if (!inDegree.has(downstream)) return;
+				const remaining = inDegree.get(downstream) - 1;
+				inDegree.set(downstream, remaining);
+				if (remaining === 0) ready.push(downstream);
+			});
+		});
+	}
 }
 
 function setupEvents() {

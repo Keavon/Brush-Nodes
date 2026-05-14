@@ -41,6 +41,12 @@ const widgets = {
 // Tracks which node types have had their one-time WebGL setup run, so we don't allocate a new GL context per node instance
 const typesSetUp = new Set();
 
+// When true, `recomputeProperties` is a no-op. It's used to avoid loading when each node is created upon loading a full graph, until all have been loaded.
+let computeSuspended = false;
+export function setComputeSuspended(value) {
+	computeSuspended = value;
+}
+
 // Max WebGL supports is 16384
 const multiplier = 4;
 export const SQUARE_RESOLUTION = [512 * multiplier, 512 * multiplier];
@@ -252,6 +258,7 @@ export function notifyBoundWidgetsOfUpdatedProperty(nodeData, identifier) {
 }
 
 export function recomputeProperties(nodeData) {
+	if (computeSuspended) return;
 	if (nodes[nodeData.name].compute) {
 		nodes[nodeData.name].compute(nodeData);
 		NodeGraph.updateGraphView();
