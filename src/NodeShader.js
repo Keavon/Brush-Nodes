@@ -56,13 +56,14 @@ export function renderToTexture(gl, resolution) {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-
 	// Framebuffer object
 	const framebuffer = gl.createFramebuffer();
 	gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
-	// Return the texture that gets rendered to
+	// Stash the attached texture on the framebuffer so readRenderedTexture can free it
+	framebuffer._attachedTexture = texture;
+
 	return framebuffer;
 }
 
@@ -71,6 +72,7 @@ export function readRenderedTexture(gl, framebuffer, resolution) {
 	gl.readPixels(0, 0, resolution[0], resolution[1], gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 
 	gl.deleteFramebuffer(framebuffer);
+	if (framebuffer._attachedTexture) gl.deleteTexture(framebuffer._attachedTexture);
 
 	return { resolution, pixelData };
 }
@@ -110,11 +112,11 @@ export function composite(gl, uniforms, textures = {}, wrap=gl.MIRRORED_REPEAT) 
 		else console.error("Unknown data type for the uniform being set");
 	});
 
-	// Textures
+	// Textures: create per-call, but free them after the draw to avoid leaking GPU resources across every recompute / preset switch
+	const transientTextures = [];
 	Object.keys(textures).forEach((textureName, index) => {
-		if (index >= gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) console.error("Your browser does not support this many texture units");
-
 		const texture = gl.createTexture();
+		transientTextures.push(texture);
 		gl.uniform1i(textures[textureName].location, index);
 		gl.activeTexture(gl[`TEXTURE${index}`]);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -136,4 +138,6 @@ export function composite(gl, uniforms, textures = {}, wrap=gl.MIRRORED_REPEAT) 
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+	transientTextures.forEach((texture) => gl.deleteTexture(texture));
 }

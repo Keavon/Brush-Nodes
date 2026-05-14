@@ -54,17 +54,18 @@ viewportStrip.uniforms = {
 };
 
 // Textures
+// `tex` holds the persistent GL texture object so we can reupload via texImage2D rather than allocating a fresh GPU texture per update
 viewport3D.textures = {
-	u_diffuse: { value: null, location: null },
-	u_displacement: { value: null, location: null },
+	u_diffuse: { value: null, location: null, tex: null },
+	u_displacement: { value: null, location: null, tex: null },
 };
 viewport2D.textures = {
-	u_diffuse: { value: null, location: null },
-	u_displacement: { value: null, location: null },
+	u_diffuse: { value: null, location: null, tex: null },
+	u_displacement: { value: null, location: null, tex: null },
 };
 viewportStrip.textures = {
-	u_diffuse: { value: null, location: null },
-	u_displacement: { value: null, location: null },
+	u_diffuse: { value: null, location: null, tex: null },
+	u_displacement: { value: null, location: null, tex: null },
 };
 
 const placeholderImage = {
@@ -117,53 +118,51 @@ export function updateImage(textureUniformName, image) {
 
 	if (image && texture3D.location && texture3D.value) {
 		viewport3D.uniforms[`${textureUniformName}Exists`].value = true;
-		sendTexture(context3D, image, textureIndex3D);
+		sendTexture(context3D, texture3D, image, textureIndex3D);
 	}
 	else {
 		viewport3D.uniforms[`${textureUniformName}Exists`].value = false;
-		sendTexture(context3D, placeholderImage, textureIndex3D);
+		sendTexture(context3D, texture3D, placeholderImage, textureIndex3D);
 	}
 
 	if (image && texture2D.location && texture2D.value) {
 		viewport2D.uniforms[`${textureUniformName}Exists`].value = true;
-		sendTexture(context2D, image, textureIndex2D);
+		sendTexture(context2D, texture2D, image, textureIndex2D);
 	}
 	else {
 		viewport2D.uniforms[`${textureUniformName}Exists`].value = false;
-		sendTexture(context2D, placeholderImage, textureIndex2D);
+		sendTexture(context2D, texture2D, placeholderImage, textureIndex2D);
 	}
 
 	if (image && textureStrip.location && textureStrip.value) {
 		viewportStrip.uniforms[`${textureUniformName}Exists`].value = true;
-		sendTexture(contextStrip, image, textureIndexStrip);
+		sendTexture(contextStrip, textureStrip, image, textureIndexStrip);
 	}
 	else {
 		viewportStrip.uniforms[`${textureUniformName}Exists`].value = false;
-		sendTexture(contextStrip, placeholderImage, textureIndexStrip);
+		sendTexture(contextStrip, textureStrip, placeholderImage, textureIndexStrip);
 	}
 }
 
-function sendTexture(gl, image, index) {
-	const maxTextureUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-	if (index >= maxTextureUnits) console.error("Your browser does not support this many texture units");
+function sendTexture(gl, slot, image, index) {
+	// Reuse one GL texture per (viewport, uniform) slot so repeated uploads don't pile up orphaned GPU textures
+	if (!slot.tex) {
+		slot.tex = gl.createTexture();
+		gl.activeTexture(gl[`TEXTURE${index}`]);
+		gl.bindTexture(gl.TEXTURE_2D, slot.tex);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	} else {
+		gl.activeTexture(gl[`TEXTURE${index}`]);
+		gl.bindTexture(gl.TEXTURE_2D, slot.tex);
+	}
 
-	// Create and bind a texture container
-	const tex = gl.createTexture();
-	gl.activeTexture(gl[`TEXTURE${index}`]);
-	gl.bindTexture(gl.TEXTURE_2D, tex);
-
-	// Disable mipmaps
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-	// Get the dimensions and pixels
 	const width = image.resolution[0];
 	const height = image.resolution[1];
 	const pixelData = image.pixelData;
 
-	// Put the image in the texture container
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 }
 

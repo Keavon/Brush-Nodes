@@ -38,6 +38,9 @@ const widgets = {
 	"Output": Widget_Output,
 };
 
+// Tracks which node types have had their one-time WebGL setup run, so we don't allocate a new GL context per node instance
+const typesSetUp = new Set();
+
 // Max WebGL supports is 16384
 const multiplier = 4;
 export const SQUARE_RESOLUTION = [512 * multiplier, 512 * multiplier];
@@ -76,8 +79,14 @@ export function createNode(nodeName, xPlacement, yPlacement, startSelected) {
 	if (startSelected) createNodeOutlineElement(nodeData);
 	updateRowDataToPropertyValues(nodeData, definition);
 
-	// Set up the shader if the node has one
-	if (node.setup) node.setup();
+	// Set up the shader if the node has one. Each node type's `setup()` allocates a WebGL context
+	// and compiles a program into module-level state shared by every node of that type, so we
+	// must only run it once per type. Without this guard, adding many nodes burns through the
+	// browser's WebGL context cap and the viewport contexts get killed.
+	if (node.setup && !typesSetUp.has(nodeName)) {
+		node.setup();
+		typesSetUp.add(nodeName);
+	}
 
 	// Compute all the output values from the inputs
 	recomputeProperties(nodeData);
